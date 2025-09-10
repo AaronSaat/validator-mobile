@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:validator/screens/dashboard_screen.dart';
+import 'package:validator/screens/pengadaan_barang_jasa_screen.dart';
+import 'package:validator/screens/persetujuan_transaksi_screen.dart';
 import 'package:validator/services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -46,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
         ).showSnackBar(const SnackBar(content: Text('Login berhasil!')));
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const DashboardScreen()),
+          MaterialPageRoute(builder: (context) => const PengadaanBarangJasaScreen()),
         );
       } else {
         setState(() {

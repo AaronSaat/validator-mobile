@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:validator/screens/login_screen.dart';
-import 'screens/dashboard_screen.dart';
 
 void main() {
   runApp(const MyApp());
