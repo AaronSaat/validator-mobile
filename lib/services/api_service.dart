@@ -41,6 +41,33 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> persetujuan({
+    required String userId,
+    String search = '',
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('${baseurl}persetujuan');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({'user_id': userId, 'search': search}),
+    );
+    print('url: ' + url.toString());
+    print(
+      'Request Body: ' + json.encode({'user_id': userId, 'search': search}),
+    );
+    print('Response Code: ' + response.statusCode.toString());
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to fetch persetujuan');
+    }
+  }
   // static Future<bool> validateToken(
   //   BuildContext context, {
   //   required String token,

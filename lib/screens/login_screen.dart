@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:validator/screens/dashboard_screen.dart';
+import 'package:validator/services/api_service.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -13,21 +15,49 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   String? _errorMessage;
 
-  void _login() {
+  Future<void> _login() async {
     setState(() {
-      if (_usernameController.text == 'aaron' &&
-          _passwordController.text == 'aaron') {
-        _errorMessage = null;
+      _errorMessage = null;
+    });
+    try {
+      final result = await ApiService.loginUser(
+        _usernameController.text.trim(),
+        _passwordController.text.trim(),
+      );
+      if (result['success'] == true) {
+        final prefs = await SharedPreferences.getInstance();
+        final user = result['user'] ?? {};
+        await prefs.setString('token', result['token'] ?? '');
+        await prefs.setInt('id', user['id'] ?? 0);
+        await prefs.setString('username', user['username'] ?? '');
+        await prefs.setString('nama', user['nama']?.toString() ?? '');
+        await prefs.setString('email', user['email'] ?? '');
+
+        final dataToPrint = {
+          'token': result['token'],
+          'id': user['id'],
+          'username': user['username'],
+          'nama': user['nama'],
+          'email': user['email'],
+        };
+        print('LOGIN DATA: ' + dataToPrint.toString());
+
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(const SnackBar(content: Text('Login berhasil!')));
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => DashboardScreen()),
+          MaterialPageRoute(builder: (context) => const DashboardScreen()),
         );
       } else {
-        _errorMessage = 'Username atau password salah';
+        setState(() {
+          _errorMessage = result['message'] ?? 'Username atau password salah';
+        });
       }
-    });
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+      });
+    }
   }
 
   @override
