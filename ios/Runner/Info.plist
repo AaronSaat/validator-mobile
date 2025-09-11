@@ -45,5 +45,14 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>App membutuhkan akses ke galeri untuk menampilkan file PDF dan gambar.</string>
+	<key>NSDocumentsFolderUsageDescription</key>
+	<string>App membutuhkan akses ke dokumen untuk menampilkan file PDF.</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

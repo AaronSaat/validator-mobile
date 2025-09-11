@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
+  static const Color black = Colors.black; // Hitam
+  static const Color white = Colors.white; // Putih
   static const Color primary = Color(0xFF1976D2); // Biru dasar
   static const Color lightblue = Color(0xFF64B5F6); // Biru muda
   static const Color secondary = Color(0xFF424242); // Abu-abu gelap
@@ -12,4 +14,7 @@ class AppColors {
   static const Color orange = Color(0xFFFF9800); // Orange
   static const Color textblack = Colors.black; // Hitam
   static const Color textwhite = Colors.white; // Putih
+  static const Color greyLight = Color(0xFFBDBDBD); // Abu-abu terang
+  static const Color greyMedium = Color(0xFF757575); // Abu-abu sedang
+  static const Color greyDark = Color(0xFF212121); // Abu-abu sangat gelap
 }

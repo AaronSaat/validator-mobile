@@ -6,10 +6,10 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:validator/screens/login_screen.dart';
+import 'package:validator/utils/globalvariables.dart';
 
 class ApiService {
-  static const String baseurl =
-      'http://172.172.52.4:8080/pengadaan-new/mobile-validator/';
+  static const String baseurl = GlobalVariables.baseApiUrl;
   // static const String baseurl = 'https://netunim.seabs.ac.id/api-syc2025/';
 
   static Future<Map<String, dynamic>> loginUser(
