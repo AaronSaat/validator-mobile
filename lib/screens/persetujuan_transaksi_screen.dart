@@ -17,7 +17,8 @@ class PersetujuanTransaksiScreen extends StatefulWidget {
 
 class _PersetujuanTransaksiScreenState
     extends State<PersetujuanTransaksiScreen> {
-  String? username, email, nama, userId;
+  String? username, email, nama;
+  int userId = 0;
   List<dynamic> persetujuanList = [];
   String? totalDibutuhkan;
   bool isLoading = true;
@@ -35,7 +36,7 @@ class _PersetujuanTransaksiScreenState
       username = prefs.getString('username') ?? '';
       email = prefs.getString('email') ?? '';
       nama = prefs.getString('nama') ?? '';
-      userId = prefs.getInt('id')?.toString() ?? '';
+      userId = prefs.getInt('id') ?? 0;
     });
     _fetchPersetujuan();
   }
@@ -46,10 +47,7 @@ class _PersetujuanTransaksiScreenState
       errorMsg = null;
     });
     try {
-      final result = await ApiService.persetujuan(
-        userId: userId.toString(),
-        search: '',
-      );
+      final result = await ApiService.persetujuan(userId: userId, search: '');
       if (result['success'] == true) {
         setState(() {
           persetujuanList = result['data'] ?? [];
@@ -224,15 +222,19 @@ class _PersetujuanTransaksiScreenState
                       itemBuilder: (context, index) {
                         final item = persetujuanList[index];
                         return GestureDetector(
-                          onTap: () {
-                            Navigator.of(context).push(
+                          onTap: () async {
+                            final result = await Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) => DetailPpbPjjScreen(
-                                  approvalId: item['id_pembelian'].toString(),
-                                  userId: userId.toString(),
+                                  pembelianId: item['id_pembelian'],
+                                  userId: userId,
                                 ),
                               ),
                             );
+                            // Jika kembali dari detail dan result == true, refresh data
+                            if (result == 'reload') {
+                              _fetchPersetujuan();
+                            }
                           },
                           child: SizedBox(
                             width: MediaQuery.of(context).size.width,

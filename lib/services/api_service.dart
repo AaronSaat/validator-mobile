@@ -41,36 +41,8 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> pembelianTambahDetailApproval({
-    required String approvalId,
-    required String userId,
-  }) async {
-    final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('token') ?? '';
-
-    final url = Uri.parse('${baseurl}pembelian-tambah-detail-approval');
-    final response = await http.post(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: json.encode({'user_id': userId, 'approval_id': approvalId}),
-    );
-    print('url: ' + url.toString());
-    print(
-      'Request Body: ' + json.encode({'user_id': userId, 'approval_id': approvalId}),
-    );
-    print('Response Code: ' + response.statusCode.toString());
-    if (response.statusCode == 200) {
-      return json.decode(response.body);
-    } else {
-      throw Exception('Failed to fetch persetujuan');
-    }
-  }
-
   static Future<Map<String, dynamic>> persetujuan({
-    required String userId,
+    required int userId,
     String search = '',
   }) async {
     final prefs = await SharedPreferences.getInstance();
@@ -88,6 +60,80 @@ class ApiService {
     print('url: ' + url.toString());
     print(
       'Request Body: ' + json.encode({'user_id': userId, 'search': search}),
+    );
+    print('Response Code: ' + response.statusCode.toString());
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to fetch persetujuan');
+    }
+  }
+
+  static Future<Map<String, dynamic>> pembelianTambahDetailApproval({
+    required String pembelianId,
+    required String userId,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('${baseurl}pembelian-tambah-detail-approval');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({'user_id': userId, 'approval_id': pembelianId}),
+    );
+    print('url: ' + url.toString());
+    print(
+      'Request Body: ' + json.encode({'user_id': userId, 'approval_id': pembelianId}),
+    );
+    print('Response Code: ' + response.statusCode.toString());
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to fetch persetujuan');
+    }
+  }
+
+  static Future<Map<String, dynamic>> pembelianApproval({
+    required int pembelianId,
+    required int userId,
+    required int approve,
+    required int level,
+    required int status,
+    required String keterangan
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('${baseurl}pembelian-approval');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({
+        'id_pembelian': pembelianId,
+        'user_id': userId,
+        'approve': approve,
+        'level': level,
+        'status': status,
+        'keterangan': keterangan,
+      }),
+    );
+    print('url: ' + url.toString());
+    print(
+      'Request Body: ' + json.encode({
+        'id_pembelian': pembelianId,
+        'user_id': userId,
+        'approve': approve,
+        'level': level,
+        'status': status,
+        'keterangan': keterangan,
+      }),
     );
     print('Response Code: ' + response.statusCode.toString());
     if (response.statusCode == 200) {

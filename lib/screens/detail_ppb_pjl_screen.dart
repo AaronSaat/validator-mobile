@@ -1,18 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:validator/screens/setujui_transaksi_pembelian_screen.dart';
 import 'package:validator/utils/appcolors.dart';
 import 'package:validator/utils/globalvariables.dart';
 import '../services/api_service.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
 
 class DetailPpbPjjScreen extends StatefulWidget {
-  final String approvalId;
-  final String userId;
+  final int pembelianId;
+  final int userId;
 
   const DetailPpbPjjScreen({
     Key? key,
-    required this.approvalId,
+    required this.pembelianId,
     required this.userId,
   }) : super(key: key);
 
@@ -38,8 +42,8 @@ class _DetailPpbPjjScreenState extends State<DetailPpbPjjScreen> {
     });
     try {
       final result = await ApiService.pembelianTambahDetailApproval(
-        approvalId: widget.approvalId,
-        userId: widget.userId,
+        pembelianId: widget.pembelianId.toString(),
+        userId: widget.userId.toString(),
       );
       setState(() {
         detailData = result;
@@ -104,36 +108,63 @@ class _DetailPpbPjjScreenState extends State<DetailPpbPjjScreen> {
   }
 
   void pdfViewer(BuildContext context, String pdfUrl) {
-    showDialog(
-      context: context,
-      builder: (context) => Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(8),
-        child: SizedBox(
-          width: double.infinity,
-          height: MediaQuery.of(context).size.height * 0.7,
-          child: PDFView(
-            filePath: pdfUrl,
-            enableSwipe: true,
-            swipeHorizontal: true,
-            autoSpacing: true,
-            pageFling: true,
-            onError: (error) {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Gagal memuat PDF: $error')),
-              );
-            },
-            onPageError: (page, error) {
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('Gagal memuat halaman $page: $error')),
-              );
-            },
+    () async {
+      String localPath = pdfUrl;
+      if (pdfUrl.startsWith('http')) {
+        // Tampilkan loading
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => Center(child: CircularProgressIndicator()),
+        );
+        try {
+          final dir = await getTemporaryDirectory();
+          final fileName = pdfUrl.split('/').last;
+          final savePath = '${dir.path}/$fileName';
+          await Dio().download(pdfUrl, savePath);
+          localPath = savePath;
+        } catch (e) {
+          print('Gagal mengunduh PDF: $e');
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Gagal mengunduh PDF: $e')));
+          return;
+        }
+        Navigator.of(context).pop(); // Tutup loading
+      }
+      // Tampilkan PDFView dengan file lokal
+      showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(8),
+          child: SizedBox(
+            width: double.infinity,
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: PDFView(
+              filePath: localPath,
+              enableSwipe: true,
+              swipeHorizontal: true,
+              autoSpacing: true,
+              pageFling: true,
+              onError: (error) {
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Gagal memuat PDF: $error')),
+                );
+              },
+              onPageError: (page, error) {
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Gagal memuat halaman $page: $error')),
+                );
+              },
+            ),
           ),
         ),
-      ),
-    );
+      );
+    }();
   }
 
   @override
@@ -426,7 +457,10 @@ class _DetailPpbPjjScreenState extends State<DetailPpbPjjScreen> {
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
                                     child: Text(
-                                      'Divisi',
+                                      detailData!['model_pembelian']['barang_jasa'] ==
+                                              1
+                                          ? 'Status PPB'
+                                          : 'Status PJL',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -1151,7 +1185,7 @@ class _DetailPpbPjjScreenState extends State<DetailPpbPjjScreen> {
                       if (detailData?['dataProviderBayarUpload'] != null &&
                           detailData!['dataProviderBayarUpload'] is List &&
                           detailData!['dataProviderBayarUpload'].isNotEmpty &&
-                          detailData!['dataProviderBayarUpload'][0]['tahap'] !=
+                          detailData!['dataProviderBayarUpload'][0]['tahap'] ==
                               2) ...[
                         Container(
                           margin: const EdgeInsets.symmetric(vertical: 6.0),
@@ -1696,11 +1730,33 @@ class _DetailPpbPjjScreenState extends State<DetailPpbPjjScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
-          // TODO: Implement approval logic and navigation
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => SetujuiTransaksiPembelianScreen(
+                pembelianId: widget.pembelianId,
+                userId: widget.userId,
+                barang_jasa: detailData!['model_pembelian']['barang_jasa'],
+                no_ppb: detailData!['model_pembelian']['no_ppb'],
+                tgl_pengajuan: detailData!['model_pembelian']['tgl_pengajuan'],
+                level: detailData!['level'],
+                divisi: detailData!['model_pembelian']['nama_divisi'],
+                keterangan:
+                    (detailData!['model_pembelian']['keterangan']
+                            ?.toString()
+                            .toLowerCase() ==
+                        'keterangan')
+                    ? '-'
+                    : '${detailData!['model_pembelian']['keterangan'] ?? '-'}',
+                total_biaya:
+                    '${detailData!['rekap_pembelian']['total_biaya'] ?? '-'}',
+              ),
+            ),
+          );
         },
-        icon: const Icon(Icons.check_circle_outline, color: Colors.white),
+        icon: const Icon(Icons.arrow_forward, color: Colors.white),
         label: const Text(
-          'Setujui Transaksi',
+          'Persetujuan',
           style: TextStyle(color: Colors.white, fontSize: 12),
         ),
         backgroundColor: AppColors.success,
