@@ -21,7 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
       _errorMessage = null;
     });
     try {
-      final result = await ApiService.loginUser(
+      final result = await ApiService.checkUser(
         _usernameController.text.trim(),
         _passwordController.text.trim(),
       );
@@ -47,7 +47,9 @@ class _LoginScreenState extends State<LoginScreen> {
           context,
         ).showSnackBar(const SnackBar(content: Text('Login berhasil!')));
         Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const PengadaanBarangJasaScreen()),
+          MaterialPageRoute(
+            builder: (context) => const PengadaanBarangJasaScreen(),
+          ),
         );
       } else {
         setState(() {

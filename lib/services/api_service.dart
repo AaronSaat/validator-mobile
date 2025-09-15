@@ -12,7 +12,7 @@ class ApiService {
   static const String baseurl = GlobalVariables.baseApiUrl;
   // static const String baseurl = 'https://netunim.seabs.ac.id/api-syc2025/';
 
-  static Future<Map<String, dynamic>> loginUser(
+  static Future<Map<String, dynamic>> checkUser(
     String username,
     String password,
   ) async {
@@ -87,7 +87,8 @@ class ApiService {
     );
     print('url: ' + url.toString());
     print(
-      'Request Body: ' + json.encode({'user_id': userId, 'approval_id': pembelianId}),
+      'Request Body: ' +
+          json.encode({'user_id': userId, 'approval_id': pembelianId}),
     );
     print('Response Code: ' + response.statusCode.toString());
     if (response.statusCode == 200) {
@@ -103,7 +104,7 @@ class ApiService {
     required int approve,
     required int level,
     required int status,
-    required String keterangan
+    required String keterangan,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
@@ -126,15 +127,33 @@ class ApiService {
     );
     print('url: ' + url.toString());
     print(
-      'Request Body: ' + json.encode({
-        'id_pembelian': pembelianId,
-        'user_id': userId,
-        'approve': approve,
-        'level': level,
-        'status': status,
-        'keterangan': keterangan,
-      }),
+      'Request Body: ${json.encode({'id_pembelian': pembelianId, 'user_id': userId, 'approve': approve, 'level': level, 'status': status, 'keterangan': keterangan})}',
     );
+    print('Response Code: ' + response.statusCode.toString());
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to fetch persetujuan');
+    }
+  }
+
+  static Future<Map<String, dynamic>> beforeAction({
+    required int userId,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('${baseurl}before-action');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({'user_id': userId}),
+    );
+    print('url: ' + url.toString());
+    print('Request Body: ${json.encode({'user_id': userId})}');
     print('Response Code: ' + response.statusCode.toString());
     if (response.statusCode == 200) {
       return json.decode(response.body);

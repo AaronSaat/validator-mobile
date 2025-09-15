@@ -12,12 +12,13 @@ class PengadaanBarangJasaScreen extends StatefulWidget {
   const PengadaanBarangJasaScreen({super.key});
 
   @override
-  State<PengadaanBarangJasaScreen> createState() => _PengadaanBarangJasaScreenState();
+  State<PengadaanBarangJasaScreen> createState() =>
+      _PengadaanBarangJasaScreenState();
 }
 
 class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
   String? username, email, nama, userId;
-  List<dynamic> persetujuanList = [];
+  Map<String, dynamic> beforeActionData = {};
   String? totalDibutuhkan;
   bool isLoading = false;
   String? errorMsg;
@@ -36,10 +37,31 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
       nama = prefs.getString('nama') ?? '';
       userId = prefs.getInt('id')?.toString() ?? '';
     });
-    _fetchPersetujuan();
+    _fetchBeforeAction();
   }
 
-  Future<void> _fetchPersetujuan() async {}
+  Future<void> _fetchBeforeAction() async {
+    if (userId == null || userId!.isEmpty) return;
+    setState(() {
+      isLoading = true;
+      errorMsg = null;
+      beforeActionData = {};
+    });
+    try {
+      final result = await ApiService.beforeAction(userId: int.parse(userId!));
+      setState(() {
+        beforeActionData = result['data'] ?? {};
+      });
+    } catch (e) {
+      setState(() {
+        errorMsg = 'Gagal memuat data: $e';
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,12 +100,13 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
             ),
           ),
         ),
+
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.black),
             tooltip: 'Refresh',
             onPressed: () {
-              _fetchPersetujuan();
+              _fetchBeforeAction();
             },
           ),
           IconButton(
@@ -116,18 +139,18 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
           SafeArea(
             child: Column(
               children: [
-                // if (isLoading)
-                //   Expanded(
-                //     child: Center(
-                //       child: LoadingAnimationWidget.beat(
-                //         color: Colors.white,
-                //         size: 80,
-                //       ),
-                //     ),
-                //   )
-                // else if (errorMsg != null)
-                //   Expanded(child: Center(child: Text(errorMsg!)))
-                // else ...[
+                if (isLoading)
+                  Expanded(
+                    child: Center(
+                      child: LoadingAnimationWidget.beat(
+                        color: Colors.white,
+                        size: 80,
+                      ),
+                    ),
+                  )
+                else if (errorMsg != null)
+                  Expanded(child: Center(child: Text(errorMsg!)))
+                else ...[
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16.0,
@@ -139,60 +162,182 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         children: [
-                          Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: ListTile(
-                              leading: const Icon(
-                                Icons.assignment_turned_in,
-                                size: 40,
-                                color: AppColors.primary,
-                              ),
-                              title: const Text(
-                                'PPB/PJL Butuh Persetujuan',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                          Stack(
+                            children: [
+                              Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
-                              ),
-                              subtitle: const Text(
-                                'Daftar transaksi yang menunggu persetujuan Anda',
-                              ),
-                              onTap: () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (context) => const PersetujuanTransaksiScreen(),
+                                child: ListTile(
+                                  leading: const Icon(
+                                    Icons.thumb_up,
+                                    size: 40,
+                                    color: AppColors.orange,
                                   ),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: ListTile(
-                              leading: const Icon(
-                                Icons.hourglass_empty,
-                                size: 40,
-                                color: AppColors.orange,
-                              ),
-                              title: const Text(
-                                'Transaksi Gantung',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                                  title: const Text(
+                                    'PPB/PJL Butuh Persetujuan',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  subtitle: const Text(
+                                    'Daftar transaksi yang menunggu persetujuan Anda',
+                                  ),
+                                  onTap: () async {
+                                    final result = await Navigator.of(context)
+                                        .push(
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                PersetujuanTransaksiScreen(),
+                                          ),
+                                        );
+                                    // Jika kembali dari detail dan result == 'reload', refresh data
+                                    if (result == 'reload') {
+                                      _fetchBeforeAction();
+                                    }
+                                  },
                                 ),
                               ),
-                              subtitle: const Text(
-                                'Transaksi yang belum selesai prosesnya',
+                              if ((beforeActionData['need_validation'] ?? 0) >
+                                  0)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '${beforeActionData['need_validation']}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Stack(
+                            children: [
+                              Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: ListTile(
+                                  leading: const Icon(
+                                    Icons.check_circle_outline,
+                                    size: 40,
+                                    color: AppColors.lightblue,
+                                  ),
+                                  title: const Text(
+                                    'Konfirmasi Barang/Jasa tiba & Penyelesaian Transaksi',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  subtitle: const Text(
+                                    'Daftar transaksi yang perlu Anda konfirmasi kedatangan barang/jasa dan menyelesaikan proses transaksi',
+                                  ),
+                                  onTap: () {
+                                    // Navigator.of(context).push(
+                                    //   MaterialPageRoute(
+                                    //     builder: (context) =>
+                                    //         const PersetujuanTransaksiScreen(),
+                                    //   ),
+                                    // );
+                                  },
+                                ),
                               ),
-                              onTap: () {
-                                // TODO: Navigasi ke halaman transaksi gantung
-                              },
-                            ),
+                              if ((beforeActionData['need_validation_barangtiba'] ??
+                                      0) >
+                                  0)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '${beforeActionData['need_validation_barangtiba']}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Stack(
+                            children: [
+                              Card(
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: ListTile(
+                                  leading: const Icon(
+                                    Icons.hourglass_empty,
+                                    size: 40,
+                                    color: AppColors.error,
+                                  ),
+                                  title: const Text(
+                                    'Transaksi Gantung',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  subtitle: const Text(
+                                    'Transaksi yang belum selesai prosesnya',
+                                  ),
+                                  onTap: () {
+                                    // TODO: Navigasi ke halaman transaksi gantung
+                                  },
+                                ),
+                              ),
+                              if ((beforeActionData['transaksi_gantung'] ?? 0) >
+                                  0)
+                                Positioned(
+                                  right: 0,
+                                  top: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 2,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '${beforeActionData['transaksi_gantung']}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                           const SizedBox(height: 8),
                           Card(
@@ -201,7 +346,7 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
                             ),
                             child: ListTile(
                               leading: const Icon(
-                                Icons.archive,
+                                Icons.inventory_2,
                                 size: 40,
                                 color: AppColors.success,
                               ),
@@ -227,9 +372,9 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
                             ),
                             child: ListTile(
                               leading: const Icon(
-                                Icons.undo,
+                                Icons.inventory_2,
                                 size: 40,
-                                color: AppColors.error,
+                                color: AppColors.success,
                               ),
                               title: const Text(
                                 'Arsip PPB/PJL dikembalikan oleh anda',
@@ -250,7 +395,7 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
                       ),
                     ),
                   ),
-                // ],
+                ],
               ],
             ),
           ),

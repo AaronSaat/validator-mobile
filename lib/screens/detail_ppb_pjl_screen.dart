@@ -175,14 +175,22 @@ class _DetailPpbPjjScreenState extends State<DetailPpbPjjScreen> {
       await OpenFile.open(filePath);
     } catch (e) {
       print('Gagal membuka file: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Gagal membuka file: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal membuka file: $e')));
     }
   }
 
   void downloadFile(String url, {String? fileName}) {
     () async {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: LoadingAnimationWidget.beat(color: AppColors.white, size: 60),
+        ),
+      );
       try {
         final response = await http.get(Uri.parse(url));
         if (response.statusCode == 200) {
@@ -195,14 +203,30 @@ class _DetailPpbPjjScreenState extends State<DetailPpbPjjScreen> {
           final file = File('${filesDir.path}/$saveName');
           await file.writeAsBytes(response.bodyBytes);
           if (!mounted) return;
+          Navigator.of(context).pop(); // Close loading
           print('Download completed: ${file.path}');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Download selesai: ${file.path}'),
+              content: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Download selesai: Silakan simpan ke folder anda\n${file.path}',
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close, color: Colors.white),
+                    tooltip: 'Tutup',
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    },
+                  ),
+                ],
+              ),
+              duration: const Duration(seconds: 8),
               action: SnackBarAction(
                 label: 'Buka File',
                 onPressed: () async {
-                  // Open file menggunakan package open_file
                   await openFile(file.path);
                 },
               ),
@@ -210,17 +234,21 @@ class _DetailPpbPjjScreenState extends State<DetailPpbPjjScreen> {
           );
         } else {
           if (!mounted) return;
+          Navigator.of(context).pop(); // Close loading
           print('Download error: status ${response.statusCode}');
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Download error: status ${response.statusCode}')),
+            SnackBar(
+              content: Text('Download error: status ${response.statusCode}'),
+            ),
           );
         }
       } catch (e) {
         if (!mounted) return;
+        Navigator.of(context).pop(); // Close loading
         print('Download error: $e');
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Download error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Download error: $e')));
       }
     }();
   }

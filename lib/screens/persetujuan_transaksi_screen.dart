@@ -76,6 +76,12 @@ class _PersetujuanTransaksiScreenState
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
+          onPressed: () {
+            Navigator.of(context).pop('reload');
+          },
+        ),
         title: Padding(
           padding: const EdgeInsets.only(left: 8.0),
           child: Container(
