@@ -5,7 +5,9 @@ import 'package:validator/screens/login_screen.dart';
 import 'package:validator/screens/persetujuan_transaksi_screen.dart';
 import 'package:validator/services/api_service.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-
+import 'package:fl_chart/fl_chart.dart';
+import 'package:validator/utils/date_formatter.dart';
+import 'package:intl/intl.dart';
 import '../utils/appcolors.dart';
 
 class PengadaanBarangJasaScreen extends StatefulWidget {
@@ -19,6 +21,7 @@ class PengadaanBarangJasaScreen extends StatefulWidget {
 class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
   String? username, email, nama, userId;
   Map<String, dynamic> beforeActionData = {};
+  Map<String, dynamic> siteIndexData = {};
   String? totalDibutuhkan;
   bool isLoading = false;
   String? errorMsg;
@@ -38,6 +41,7 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
       userId = prefs.getInt('id')?.toString() ?? '';
     });
     _fetchBeforeAction();
+    _fetchSiteIndex();
   }
 
   Future<void> _fetchBeforeAction() async {
@@ -51,6 +55,30 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
       final result = await ApiService.beforeAction(userId: int.parse(userId!));
       setState(() {
         beforeActionData = result['data'] ?? {};
+      });
+    } catch (e) {
+      setState(() {
+        errorMsg = 'Gagal memuat data: $e';
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> _fetchSiteIndex() async {
+    if (userId == null || userId!.isEmpty) return;
+    setState(() {
+      isLoading = true;
+      errorMsg = null;
+      siteIndexData = {};
+    });
+    try {
+      final result = await ApiService.siteIndex(userId: int.parse(userId!));
+      setState(() {
+        siteIndexData = result;
+        print('siteIndexData: $siteIndexData');
       });
     } catch (e) {
       setState(() {
@@ -106,7 +134,8 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
             icon: const Icon(Icons.refresh, color: Colors.black),
             tooltip: 'Refresh',
             onPressed: () {
-              _fetchBeforeAction();
+              isLoading = true;
+              _loadUserInfo();
             },
           ),
           IconButton(
@@ -137,266 +166,763 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
           //   ),
           // ),
           SafeArea(
-            child: Column(
-              children: [
-                if (isLoading)
-                  Expanded(
-                    child: Center(
-                      child: LoadingAnimationWidget.beat(
-                        color: Colors.white,
-                        size: 80,
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  if (isLoading)
+                    Expanded(
+                      child: Center(
+                        child: LoadingAnimationWidget.beat(
+                          color: Colors.white,
+                          size: 80,
+                        ),
                       ),
-                    ),
-                  )
-                else if (errorMsg != null)
-                  Expanded(child: Center(child: Text(errorMsg!)))
-                else ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
-                    ),
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ListView(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        children: [
-                          Stack(
-                            children: [
-                              Card(
-                                shape: RoundedRectangleBorder(
+                    )
+                  else if (errorMsg != null)
+                    Expanded(child: Center(child: Text(errorMsg!)))
+                  else ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
+                      ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: GridView.count(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          crossAxisCount: 2,
+                          childAspectRatio: 1.6,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          children: [
+                            // 1
+                            Stack(
+                              children: [
+                                ClipRRect(
                                   borderRadius: BorderRadius.circular(16),
+                                  child: Image.asset(
+                                    'assets/cards/yellow.png',
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
-                                child: ListTile(
-                                  leading: const Icon(
-                                    Icons.thumb_up,
-                                    size: 40,
-                                    color: AppColors.orange,
-                                  ),
-                                  title: const Text(
-                                    'PPB/PJL Butuh Persetujuan',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 8,
                                     ),
-                                  ),
-                                  subtitle: const Text(
-                                    'Daftar transaksi yang menunggu persetujuan Anda',
-                                  ),
-                                  onTap: () async {
-                                    final result = await Navigator.of(context)
-                                        .push(
-                                          MaterialPageRoute(
-                                            builder: (context) =>
-                                                PersetujuanTransaksiScreen(),
+                                    title: Text(
+                                      '\n',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 8,
+                                        color: Colors.white,
+                                      ),
+                                      textAlign: TextAlign.end,
+                                    ),
+                                    subtitle: const Text(
+                                      'Butuh \nPersetujuan',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black54,
+                                            offset: Offset(1, 1),
+                                            blurRadius: 2,
                                           ),
-                                        );
-                                    // Jika kembali dari detail dan result == 'reload', refresh data
-                                    if (result == 'reload') {
-                                      _fetchBeforeAction();
-                                    }
-                                  },
+                                        ],
+                                      ),
+                                      textAlign: TextAlign.end,
+                                    ),
+                                    onTap: () async {
+                                      final result = await Navigator.of(context)
+                                          .push(
+                                            MaterialPageRoute(
+                                              builder: (context) =>
+                                                  PersetujuanTransaksiScreen(),
+                                            ),
+                                          );
+                                      if (result == 'reload') {
+                                        _fetchBeforeAction();
+                                      }
+                                    },
+                                  ),
                                 ),
-                              ),
-                              if ((beforeActionData['need_validation'] ?? 0) >
-                                  0)
-                                Positioned(
-                                  right: 0,
-                                  top: 0,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      '${beforeActionData['need_validation']}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
+                                if ((beforeActionData['need_validation'] ?? 0) >
+                                    0)
+                                  Positioned(
+                                    right: 0,
+                                    top: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        '${beforeActionData['need_validation']}',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Stack(
-                            children: [
-                              Card(
-                                shape: RoundedRectangleBorder(
+                              ],
+                            ),
+                            // 2
+                            Stack(
+                              children: [
+                                ClipRRect(
                                   borderRadius: BorderRadius.circular(16),
+                                  child: Image.asset(
+                                    'assets/cards/blue.png',
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
-                                child: ListTile(
-                                  leading: const Icon(
-                                    Icons.check_circle_outline,
-                                    size: 40,
-                                    color: AppColors.lightblue,
-                                  ),
-                                  title: const Text(
-                                    'Konfirmasi Barang/Jasa tiba & Penyelesaian Transaksi',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  subtitle: const Text(
-                                    'Daftar transaksi yang perlu Anda konfirmasi kedatangan barang/jasa dan menyelesaikan proses transaksi',
-                                  ),
-                                  onTap: () {
-                                    // Navigator.of(context).push(
-                                    //   MaterialPageRoute(
-                                    //     builder: (context) =>
-                                    //         const PersetujuanTransaksiScreen(),
-                                    //   ),
-                                    // );
-                                  },
-                                ),
-                              ),
-                              if ((beforeActionData['need_validation_barangtiba'] ??
-                                      0) >
-                                  0)
-                                Positioned(
-                                  right: 0,
-                                  top: 0,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 8,
-                                      vertical: 2,
+                                      vertical: 8,
                                     ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      '${beforeActionData['need_validation_barangtiba']}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
+                                    title: Text(
+                                      '\n',
+                                      style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 14,
+                                        fontSize: 8,
+                                        color: Colors.white,
+                                      ),
+                                      textAlign: TextAlign.end,
+                                    ),
+                                    subtitle: const Text(
+                                      'Butuh Konfirmasi Penyelesaian',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black54,
+                                            offset: Offset(1, 1),
+                                            blurRadius: 2,
+                                          ),
+                                        ],
+                                      ),
+                                      textAlign: TextAlign.end,
+                                    ),
+                                    onTap: () {
+                                      // TODO: Navigasi ke halaman konfirmasi barang/jasa tiba
+                                    },
+                                  ),
+                                ),
+                                if ((beforeActionData['need_validation_barangtiba'] ??
+                                        0) >
+                                    0)
+                                  Positioned(
+                                    right: 0,
+                                    top: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        '${beforeActionData['need_validation_barangtiba']}',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
                                       ),
                                     ),
                                   ),
-                                ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Stack(
-                            children: [
-                              Card(
-                                shape: RoundedRectangleBorder(
+                              ],
+                            ),
+                            // 3
+                            Stack(
+                              children: [
+                                ClipRRect(
                                   borderRadius: BorderRadius.circular(16),
+                                  child: Image.asset(
+                                    'assets/cards/red.png',
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
-                                child: ListTile(
-                                  leading: const Icon(
-                                    Icons.hourglass_empty,
-                                    size: 40,
-                                    color: AppColors.error,
-                                  ),
-                                  title: const Text(
-                                    'Transaksi Gantung',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                    ),
-                                  ),
-                                  subtitle: const Text(
-                                    'Transaksi yang belum selesai prosesnya',
-                                  ),
-                                  onTap: () {
-                                    // TODO: Navigasi ke halaman transaksi gantung
-                                  },
-                                ),
-                              ),
-                              if ((beforeActionData['transaksi_gantung'] ?? 0) >
-                                  0)
-                                Positioned(
-                                  right: 0,
-                                  top: 0,
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
                                       horizontal: 8,
-                                      vertical: 2,
+                                      vertical: 8,
                                     ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.red,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      '${beforeActionData['transaksi_gantung']}',
-                                      style: const TextStyle(
-                                        color: Colors.white,
+                                    title: Text(
+                                      '\n',
+                                      style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 14,
+                                        fontSize: 8,
+                                        color: Colors.white,
+                                      ),
+                                      textAlign: TextAlign.end,
+                                    ),
+                                    subtitle: const Text(
+                                      'Transaksi\nGantung',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black54,
+                                            offset: Offset(1, 1),
+                                            blurRadius: 2,
+                                          ),
+                                        ],
+                                      ),
+                                      textAlign: TextAlign.end,
+                                    ),
+                                    onTap: () {
+                                      // TODO: Navigasi ke halaman transaksi gantung
+                                    },
+                                  ),
+                                ),
+                                if ((beforeActionData['transaksi_gantung'] ??
+                                        0) >
+                                    0)
+                                  Positioned(
+                                    right: 0,
+                                    top: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Text(
+                                        '${beforeActionData['transaksi_gantung']}',
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                        ),
                                       ),
                                     ),
                                   ),
+                              ],
+                            ),
+                            // 4
+                            Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Image.asset(
+                                    'assets/cards/green.png',
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: ListTile(
-                              leading: const Icon(
-                                Icons.inventory_2,
-                                size: 40,
-                                color: AppColors.success,
-                              ),
-                              title: const Text(
-                                'Arsip PPB/PJL',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 8,
+                                    ),
+                                    title: Text(
+                                      '\n',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 8,
+                                        color: Colors.white,
+                                      ),
+                                      textAlign: TextAlign.end,
+                                    ),
+                                    subtitle: const Text(
+                                      'Arsip\nTransaksi',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black54,
+                                            offset: Offset(1, 1),
+                                            blurRadius: 2,
+                                          ),
+                                        ],
+                                      ),
+                                      textAlign: TextAlign.end,
+                                    ),
+                                    onTap: () {
+                                      // TODO: Navigasi ke halaman arsip
+                                    },
+                                  ),
                                 ),
-                              ),
-                              subtitle: const Text(
-                                'Riwayat transaksi yang sudah selesai',
-                              ),
-                              onTap: () {
-                                // TODO: Navigasi ke halaman arsip
-                              },
+                              ],
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Card(
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: ListTile(
-                              leading: const Icon(
-                                Icons.inventory_2,
-                                size: 40,
-                                color: AppColors.success,
-                              ),
-                              title: const Text(
-                                'Arsip PPB/PJL dikembalikan oleh anda',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
+                            // 5
+                            Stack(
+                              children: [
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(16),
+                                  child: Image.asset(
+                                    'assets/cards/green.png',
+                                    width: double.infinity,
+                                    height: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
                                 ),
-                              ),
-                              subtitle: const Text(
-                                'Transaksi yang Anda kembalikan ke pengusul',
-                              ),
-                              onTap: () {
-                                // TODO: Navigasi ke halaman arsip dikembalikan
-                              },
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ListTile(
+                                    contentPadding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 8,
+                                    ),
+                                    title: Text(
+                                      '\n',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 8,
+                                        color: Colors.white,
+                                      ),
+                                      textAlign: TextAlign.end,
+                                    ),
+                                    subtitle: const Text(
+                                      'Arsip\nTransaksi',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                        color: Colors.white,
+                                        shadows: [
+                                          Shadow(
+                                            color: Colors.black54,
+                                            offset: Offset(1, 1),
+                                            blurRadius: 2,
+                                          ),
+                                        ],
+                                      ),
+                                      textAlign: TextAlign.end,
+                                    ),
+                                    onTap: () {
+                                      // TODO: Navigasi ke halaman arsip dikembalikan
+                                    },
+                                  ),
+                                ),
+                              ],
                             ),
-                          ),
-                        ],
+                            // 6 (dummy/empty for layout)
+                            Container(),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
+                      ),
+                      child: SizedBox(
+                        height: 350,
+                        child: Card(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(24.0),
+                            child: Column(
+                              children: [
+                                Expanded(
+                                  child: LineChart(
+                                    LineChartData(
+                                      gridData: FlGridData(show: true),
+                                      titlesData: FlTitlesData(
+                                        leftTitles: AxisTitles(
+                                          sideTitles: SideTitles(
+                                            showTitles: true,
+                                            reservedSize: 60,
+                                            getTitlesWidget: (value, meta) {
+                                              final formatted =
+                                                  NumberFormat.decimalPattern(
+                                                    'id',
+                                                  ).format(value.round());
+                                              return Text(
+                                                formatted,
+                                                style: const TextStyle(
+                                                  color: Colors.black87,
+                                                  fontSize: 10,
+                                                ),
+                                                textAlign: TextAlign.right,
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                        bottomTitles: AxisTitles(
+                                          sideTitles: SideTitles(
+                                            showTitles: true,
+                                            reservedSize: 32,
+                                            getTitlesWidget: (value, meta) {
+                                              // Tampilkan angka bulan sebagai label
+                                              return Text(
+                                                value.toInt().toString(),
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                ),
+                                              );
+                                            },
+                                          ),
+                                        ),
+                                        topTitles: AxisTitles(
+                                          sideTitles: SideTitles(
+                                            showTitles: false,
+                                          ),
+                                        ),
+                                        rightTitles: AxisTitles(
+                                          sideTitles: SideTitles(
+                                            showTitles: false,
+                                          ),
+                                        ),
+                                      ),
+                                      borderData: FlBorderData(show: true),
+                                      minX:
+                                          (siteIndexData['data_rekap']?['pengeluaran_bulan_6bulan']
+                                                      as List?)
+                                                  ?.isNotEmpty ==
+                                              true
+                                          ? ((siteIndexData['data_rekap']?['pengeluaran_bulan_6bulan']
+                                                            as List)
+                                                        .first
+                                                    as num)
+                                                .toDouble()
+                                          : 0,
+                                      maxX:
+                                          (siteIndexData['data_rekap']?['pengeluaran_bulan_6bulan']
+                                                      as List?)
+                                                  ?.isNotEmpty ==
+                                              true
+                                          ? ((siteIndexData['data_rekap']?['pengeluaran_bulan_6bulan']
+                                                            as List)
+                                                        .last
+                                                    as num)
+                                                .toDouble()
+                                          : 12,
+                                      minY: 0,
+                                      maxY:
+                                          (siteIndexData['data_rekap']?['pengeluaran_total_6bulan']
+                                                  as List?)
+                                              ?.reduce((a, b) => a > b ? a : b)
+                                              ?.toDouble() ??
+                                          10,
+                                      lineBarsData: [
+                                        LineChartBarData(
+                                          spots: (() {
+                                            final xList =
+                                                siteIndexData['data_rekap']?['pengeluaran_bulan_6bulan']
+                                                    as List? ??
+                                                [];
+                                            final yList =
+                                                siteIndexData['data_rekap']?['pengeluaran_total_6bulan']
+                                                    as List? ??
+                                                [];
+                                            final length =
+                                                xList.length < yList.length
+                                                ? xList.length
+                                                : yList.length;
+                                            return List.generate(length, (i) {
+                                              final x = xList[i] is num
+                                                  ? (xList[i] as num).toDouble()
+                                                  : double.tryParse(
+                                                          xList[i].toString(),
+                                                        ) ??
+                                                        i.toDouble();
+                                              final y = yList[i] is num
+                                                  ? (yList[i] as num).toDouble()
+                                                  : double.tryParse(
+                                                          yList[i].toString(),
+                                                        ) ??
+                                                        0;
+                                              return FlSpot(x, y);
+                                            });
+                                          })(),
+                                          isCurved: false,
+                                          color: AppColors.primary,
+                                          barWidth: 3,
+                                          dotData: FlDotData(show: true),
+                                          belowBarData: BarAreaData(
+                                            show: true,
+                                            color: AppColors.primary.withAlpha(30), // warna fill area di bawah garis
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'Angka bulan tahun 2025',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black54,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
+                      ),
+                      child: Container(
+                        width: MediaQuery.of(context).size.width,
+                        height:
+                            ((siteIndexData['data_rekap'] != null &&
+                                siteIndexData['data_rekap']['pengeluaran_per_divisi_bulan_ini'] !=
+                                    null)
+                            ? (siteIndexData['data_rekap']['pengeluaran_per_divisi_bulan_ini']
+                                          as List)
+                                      .length *
+                                  40.0
+                            : 320),
+                        decoration: BoxDecoration(
+                          color: AppColors.success,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 16.0,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.receipt_long,
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Total Pengeluaran ${siteIndexData['data_rekap']?['bulan_tahun']}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.normal,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Center(
+                                child: Text(
+                                  siteIndexData['pengeluaran_total_bulan_ini']
+                                          ?.toString() ??
+                                      'Rp. 0',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 24,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              const Divider(
+                                color: Colors.white,
+                                thickness: 1,
+                                height: 32,
+                              ),
+                              // Print pengeluaran per divisi bulan ini
+                              if (siteIndexData['data_rekap'] != null &&
+                                  siteIndexData['data_rekap']['pengeluaran_per_divisi_bulan_ini'] !=
+                                      null)
+                                ...List.generate(
+                                  (siteIndexData['data_rekap']['pengeluaran_per_divisi_bulan_ini']
+                                          as List)
+                                      .length,
+                                  (index) {
+                                    final item =
+                                        siteIndexData['data_rekap']['pengeluaran_per_divisi_bulan_ini'][index];
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 2.0,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Text(
+                                            item['divisi']?.toString() ?? '',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.normal,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          Text(
+                                            item['total']?.toString() ?? '0',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
+                      ),
+                      child: Container(
+                        width: MediaQuery.of(context).size.width,
+                        height:
+                            ((siteIndexData['data_rekap'] != null &&
+                                siteIndexData['data_rekap']['pengeluaran_gantung_per_divisi_bulan_ini'] !=
+                                    null)
+                            ? (siteIndexData['data_rekap']['pengeluaran_gantung_per_divisi_bulan_ini']
+                                          as List)
+                                      .length *
+                                  40.0
+                            : 320),
+                        decoration: BoxDecoration(
+                          color: AppColors.error,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 16.0,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(
+                                    Icons.battery_6_bar, // battery 3/4 icon
+                                    color: Colors.white,
+                                    size: 24,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Total Transaksi Tunai Gantung',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.normal,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Center(
+                                child: Text(
+                                  siteIndexData['data_rekap']?['transaksi_gantung_total']
+                                          ?.toString() ??
+                                      'Rp. 0',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 24,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              const Divider(
+                                color: Colors.white,
+                                thickness: 1,
+                                height: 32,
+                              ),
+                              // Print pengeluaran per divisi bulan ini
+                              if (siteIndexData['data_rekap'] != null &&
+                                  siteIndexData['data_rekap']['pengeluaran_gantung_per_divisi_bulan_ini'] !=
+                                      null)
+                                ...List.generate(
+                                  (siteIndexData['data_rekap']['pengeluaran_gantung_per_divisi_bulan_ini']
+                                          as List)
+                                      .length,
+                                  (index) {
+                                    final item =
+                                        siteIndexData['data_rekap']['pengeluaran_gantung_per_divisi_bulan_ini'][index];
+                                    return Padding(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 2.0,
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              item['divisi']?.toString() ?? '',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.normal,
+                                                fontSize: 14,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          Text(
+                                            item['total']?.toString() ?? '0',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ],

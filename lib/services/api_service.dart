@@ -41,6 +41,28 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> siteIndex({required int userId}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('${baseurl}site-index');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({'user_id': userId}),
+    );
+    print('url: ' + url.toString());
+    print('Request Body: ${json.encode({'user_id': userId})}');
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to fetch site index');
+    }
+  }
+
   static Future<Map<String, dynamic>> persetujuan({
     required int userId,
     String search = '',

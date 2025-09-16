@@ -21,6 +21,7 @@ dependencies:
   path_provider: ^2.0.0
   flutter_file_downloader: ^2.1.0
   open_file: ^3.5.10
+  fl_chart: ^1.1.0
 
 dev_dependencies:
   flutter_test:
@@ -34,4 +35,11 @@ flutter:
 
   assets:
     - assets/images/background_login.jpg
-    
+
+    - assets/cards/red.png
+    - assets/cards/yellow.png
+    - assets/cards/blue.png
+    - assets/cards/green.png
+
+    - assets/cards/total_pengeluaran.png
+    - assets/cards/tunai_gantung.png
