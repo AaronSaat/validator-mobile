@@ -54,8 +54,6 @@ class ApiService {
       },
       body: json.encode({'user_id': userId}),
     );
-    print('url: ' + url.toString());
-    print('Request Body: ${json.encode({'user_id': userId})}');
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
@@ -79,11 +77,6 @@ class ApiService {
       },
       body: json.encode({'user_id': userId, 'search': search}),
     );
-    print('url: ' + url.toString());
-    print(
-      'Request Body: ' + json.encode({'user_id': userId, 'search': search}),
-    );
-    print('Response Code: ' + response.statusCode.toString());
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
@@ -107,16 +100,10 @@ class ApiService {
       },
       body: json.encode({'user_id': userId, 'approval_id': pembelianId}),
     );
-    print('url: ' + url.toString());
-    print(
-      'Request Body: ' +
-          json.encode({'user_id': userId, 'approval_id': pembelianId}),
-    );
-    print('Response Code: ' + response.statusCode.toString());
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      throw Exception('Failed to fetch persetujuan');
+      throw Exception('Failed to fetch pembelian tambah detail approval');
     }
   }
 
@@ -147,15 +134,10 @@ class ApiService {
         'keterangan': keterangan,
       }),
     );
-    print('url: ' + url.toString());
-    print(
-      'Request Body: ${json.encode({'id_pembelian': pembelianId, 'user_id': userId, 'approve': approve, 'level': level, 'status': status, 'keterangan': keterangan})}',
-    );
-    print('Response Code: ' + response.statusCode.toString());
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      throw Exception('Failed to fetch persetujuan');
+      throw Exception('Failed to fetch pembelian approval');
     }
   }
 
@@ -174,15 +156,36 @@ class ApiService {
       },
       body: json.encode({'user_id': userId}),
     );
-    print('url: ' + url.toString());
-    print('Request Body: ${json.encode({'user_id': userId})}');
-    print('Response Code: ' + response.statusCode.toString());
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      throw Exception('Failed to fetch persetujuan');
+      throw Exception('Failed to fetch before action');
     }
   }
+
+  static Future<Map<String, dynamic>> transaksiGantung({
+    required int userId,
+    String search = '',
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('${baseurl}transaksi-gantung');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({'user_id': userId, 'search': search}),
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to fetch transaksi gantung');
+    }
+  }
+  
   // static Future<bool> validateToken(
   //   BuildContext context, {
   //   required String token,

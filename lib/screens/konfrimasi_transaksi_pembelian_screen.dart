@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:validator/utils/appcolors.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 class KonfirmasiTransaksiPembelianScreen extends StatelessWidget {
   final bool isSuccess;
@@ -38,10 +40,16 @@ class KonfirmasiTransaksiPembelianScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
             GestureDetector(
-              onTap: () {
+                onTap: () {
                 Navigator.of(context).pop();
                 Navigator.of(context).pop();
                 Navigator.of(context).pop('reload');
+                
+                // untuk handle multiple pop context karena ada searching
+                SharedPreferences.getInstance().then((prefs) {
+                  prefs.setString('proses', 'reload');
+                  print('SharedPreferences proses konfirmasi: ${prefs.getString('proses')}');
+                });
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(

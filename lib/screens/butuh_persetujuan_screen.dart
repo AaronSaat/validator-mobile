@@ -1,22 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:validator/screens/detail_ppb_pjl_screen.dart';
+import 'package:validator/screens/dashboard_screen.dart';
+import 'package:validator/screens/detail_butuh_persetujuan_screen.dart';
 import 'package:validator/screens/login_screen.dart';
+import 'package:validator/screens/searching_screen.dart';
 import 'package:validator/services/api_service.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:validator/utils/appstatus.dart';
 
 import '../utils/appcolors.dart';
 
-class PersetujuanTransaksiScreen extends StatefulWidget {
-  const PersetujuanTransaksiScreen({super.key});
+class ButuhPersetujuanScreen extends StatefulWidget {
+  final String search;
+  const ButuhPersetujuanScreen({super.key, this.search = ''});
 
   @override
-  State<PersetujuanTransaksiScreen> createState() =>
-      _PersetujuanTransaksiScreenState();
+  State<ButuhPersetujuanScreen> createState() => _ButuhPersetujuanScreenState();
 }
 
-class _PersetujuanTransaksiScreenState
-    extends State<PersetujuanTransaksiScreen> {
+class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
   String? username, email, nama;
   int userId = 0;
   List<dynamic> persetujuanList = [];
@@ -47,7 +49,10 @@ class _PersetujuanTransaksiScreenState
       errorMsg = null;
     });
     try {
-      final result = await ApiService.persetujuan(userId: userId, search: '');
+      final result = await ApiService.persetujuan(
+        userId: userId,
+        search: widget.search,
+      );
       if (result['success'] == true) {
         setState(() {
           persetujuanList = result['data'] ?? [];
@@ -78,8 +83,19 @@ class _PersetujuanTransaksiScreenState
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios, color: Colors.black),
-          onPressed: () {
-            Navigator.of(context).pop('reload');
+          onPressed: () async {
+            final prefs = await SharedPreferences.getInstance();
+            final proses = prefs.getString('proses');
+            print('SharedPreferences proses dashboard: $proses');
+            if (proses == 'reload') {
+              Navigator.of(context).pushReplacement(
+                MaterialPageRoute(
+                  builder: (context) => const DashboardScreen(),
+                ),
+              );
+            } else {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            }
           },
         ),
         title: Padding(
@@ -163,6 +179,142 @@ class _PersetujuanTransaksiScreenState
                 else if (errorMsg != null)
                   Expanded(child: Center(child: Text(errorMsg!)))
                 else ...[
+                  if (widget.search != "")
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
+                      ),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => SearchingScreen(
+                                fromScreen: 'butuh_persetujuan',
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(color: AppColors.orange),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              children: [
+                                // Icon dan text di ujung kiri
+                                const Icon(
+                                  Icons.search,
+                                  color: AppColors.black,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Hasil pencarian untuk:',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.normal,
+                                          fontSize: 12,
+                                          color: AppColors.textwhite,
+                                        ),
+                                      ),
+                                      Text(
+                                        '${widget.search}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                          color: AppColors.textwhite,
+                                        ),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                // Tombol tampil semua di ujung kanan
+                                Container(
+                                  height: 48,
+                                  width: 84,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.success,
+                                    borderRadius: BorderRadius.circular(18),
+                                  ),
+                                  child: TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context).pushReplacement(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const ButuhPersetujuanScreen(),
+                                        ),
+                                      );
+                                    },
+                                    child: const Text(
+                                      'Tampilkan\nSemua',
+                                      style: TextStyle(
+                                        color: AppColors.textwhite,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    )
+                  else
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 8.0,
+                      ),
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => SearchingScreen(
+                                fromScreen: 'butuh_persetujuan',
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(24),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey.withOpacity(0.2),
+                                blurRadius: 6,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              const SizedBox(width: 16),
+                              const Icon(Icons.search, color: Colors.grey),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  'Cari PPB/PJL Butuh Persetujuan...',
+                                  style: TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16.0,
@@ -231,10 +383,11 @@ class _PersetujuanTransaksiScreenState
                           onTap: () async {
                             final result = await Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) => DetailPpbPjjScreen(
-                                  pembelianId: item['id_pembelian'],
-                                  userId: userId,
-                                ),
+                                builder: (context) =>
+                                    DetailButuhPersetujuanScreen(
+                                      pembelianId: item['id_pembelian'],
+                                      userId: userId,
+                                    ),
                               ),
                             );
                             // Jika kembali dari detail dan result == true, refresh data
@@ -257,11 +410,9 @@ class _PersetujuanTransaksiScreenState
                                   Container(
                                     width: 100,
                                     decoration: BoxDecoration(
-                                      color: item['status'] == 1
-                                          ? AppColors.lightblue
-                                          : item['status'] == 101
-                                          ? AppColors.orange
-                                          : Colors.grey[300],
+                                      color: AppStatus.getStatusColor(
+                                        item['status'],
+                                      ),
                                       borderRadius: const BorderRadius.only(
                                         topLeft: Radius.circular(12),
                                         bottomLeft: Radius.circular(12),
@@ -276,13 +427,9 @@ class _PersetujuanTransaksiScreenState
                                             MainAxisAlignment.center,
                                         children: [
                                           Icon(
-                                            item['status'] == 1
-                                                ? Icons.check_circle
-                                                : item['status'] == 2
-                                                ? Icons.send
-                                                : item['status'] == 101
-                                                ? Icons.assignment
-                                                : Icons.help_outline,
+                                            AppStatus.getStatusIcon(
+                                              item['status'],
+                                            ),
                                             color: Colors.white,
                                             size: 32,
                                           ),

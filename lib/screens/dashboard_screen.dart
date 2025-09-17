@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:validator/screens/detail_ppb_pjl_screen.dart';
+import 'package:validator/screens/detail_butuh_persetujuan_screen.dart';
 import 'package:validator/screens/login_screen.dart';
-import 'package:validator/screens/persetujuan_transaksi_screen.dart';
+import 'package:validator/screens/butuh_persetujuan_screen.dart';
+import 'package:validator/screens/transaksi_gantung_screen.dart';
 import 'package:validator/services/api_service.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -10,15 +11,16 @@ import 'package:validator/utils/date_formatter.dart';
 import 'package:intl/intl.dart';
 import '../utils/appcolors.dart';
 
-class PengadaanBarangJasaScreen extends StatefulWidget {
-  const PengadaanBarangJasaScreen({super.key});
+class DashboardScreen extends StatefulWidget {
+  final String?
+  fromScreen; // untuk handle multiple pop context karena ada searching
+  const DashboardScreen({super.key, this.fromScreen});
 
   @override
-  State<PengadaanBarangJasaScreen> createState() =>
-      _PengadaanBarangJasaScreenState();
+  State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
-class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
+class _DashboardScreenState extends State<DashboardScreen> {
   String? username, email, nama, userId;
   Map<String, dynamic> beforeActionData = {};
   Map<String, dynamic> siteIndexData = {};
@@ -29,7 +31,19 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
   @override
   void initState() {
     super.initState();
-    _loadUserInfo();
+
+    // untuk handle multiple pop context karena ada searching
+    print('SharedPreferences prose  s : fromScreen: ${widget.fromScreen}');
+    if (widget.fromScreen == 'login') {
+      _loadUserInfo();
+    }
+    SharedPreferences.getInstance().then((prefs) {
+      final proses = prefs.getString('proses');
+      print('SharedPreferences proses dashboard: ${proses}');
+      if (proses == 'reload') {
+        _loadUserInfo();
+      }
+    });
   }
 
   Future<void> _loadUserInfo() async {
@@ -42,6 +56,12 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
     });
     _fetchBeforeAction();
     _fetchSiteIndex();
+
+    // untuk handle multiple pop context karena ada searching
+    await prefs.setString('proses', '');
+    print(
+      'SharedPreferences proses setelah loadUserInfo: ${prefs.getString('proses')}',
+    );
   }
 
   Future<void> _fetchBeforeAction() async {
@@ -245,7 +265,7 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
                                           .push(
                                             MaterialPageRoute(
                                               builder: (context) =>
-                                                  PersetujuanTransaksiScreen(),
+                                                  ButuhPersetujuanScreen(),
                                             ),
                                           );
                                       if (result == 'reload') {
@@ -401,7 +421,12 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
                                       textAlign: TextAlign.end,
                                     ),
                                     onTap: () {
-                                      // TODO: Navigasi ke halaman transaksi gantung
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              TransaksiGantungScreen(),
+                                        ),
+                                      );
                                     },
                                   ),
                                 ),
@@ -534,8 +559,6 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
                                 ),
                               ],
                             ),
-                            // 6 (dummy/empty for layout)
-                            Container(),
                           ],
                         ),
                       ),
@@ -546,7 +569,7 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
                         vertical: 8.0,
                       ),
                       child: SizedBox(
-                        height: 350,
+                        height: 400,
                         child: Card(
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -555,6 +578,16 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
                             padding: const EdgeInsets.all(24.0),
                             child: Column(
                               children: [
+                                const Text(
+                                  'Total Pengeluaran 6 Bulan Terakhir',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textblack,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 16),
                                 Expanded(
                                   child: LineChart(
                                     LineChartData(
@@ -673,10 +706,33 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
                                           dotData: FlDotData(show: true),
                                           belowBarData: BarAreaData(
                                             show: true,
-                                            color: AppColors.primary.withAlpha(30), // warna fill area di bawah garis
+                                            color: AppColors.primary.withAlpha(
+                                              30,
+                                            ), // warna fill area di bawah garis
                                           ),
                                         ),
                                       ],
+                                      // Tambahkan touch callback untuk detail saat ditekan
+                                      lineTouchData: LineTouchData(
+                                        touchTooltipData: LineTouchTooltipData(
+                                          getTooltipColor:(touchedSpot) => AppColors.primary,
+                                          getTooltipItems: (touchedSpots) {
+                                            return touchedSpots.map((spot) {
+                                              final bulan = spot.x.toInt();
+                                              final nominal = spot.y;
+                                              return LineTooltipItem(
+                                                'Bulan: $bulan\nTotal: ${NumberFormat.currency(locale: 'id', symbol: 'Rp ').format(nominal)}',
+                                                const TextStyle(
+                                                  color: AppColors.textwhite,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                ),
+                                              );
+                                            }).toList();
+                                          },
+                                        ),
+                                        handleBuiltInTouches: true,
+                                      ),
                                     ),
                                   ),
                                 ),
@@ -684,9 +740,20 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
                                 const Text(
                                   'Angka bulan tahun 2025',
                                   style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.black54,
+                                    fontSize: 14,
+                                    color: AppColors.textblack,
                                     fontWeight: FontWeight.w500,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 4),
+                                const Text(
+                                  'Klik dan tahan pada titik atau garis vertikal data untuk melihat detail',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.textblack,
+                                    fontWeight: FontWeight.w500,
+                                    fontStyle: FontStyle.italic,
                                   ),
                                   textAlign: TextAlign.center,
                                 ),
@@ -703,15 +770,6 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
                       ),
                       child: Container(
                         width: MediaQuery.of(context).size.width,
-                        height:
-                            ((siteIndexData['data_rekap'] != null &&
-                                siteIndexData['data_rekap']['pengeluaran_per_divisi_bulan_ini'] !=
-                                    null)
-                            ? (siteIndexData['data_rekap']['pengeluaran_per_divisi_bulan_ini']
-                                          as List)
-                                      .length *
-                                  40.0
-                            : 320),
                         decoration: BoxDecoration(
                           color: AppColors.success,
                           borderRadius: BorderRadius.circular(16),
@@ -745,7 +803,7 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
                               const SizedBox(height: 4),
                               Center(
                                 child: Text(
-                                  siteIndexData['pengeluaran_total_bulan_ini']
+                                  siteIndexData['data_rekap']?['pengeluaran_total_bulan_ini']
                                           ?.toString() ??
                                       'Rp. 0',
                                   style: const TextStyle(
@@ -761,45 +819,66 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
                                 thickness: 1,
                                 height: 32,
                               ),
-                              // Print pengeluaran per divisi bulan ini
+                              // Tanpa scroll, gunakan Wrap dan Expanded
                               if (siteIndexData['data_rekap'] != null &&
                                   siteIndexData['data_rekap']['pengeluaran_per_divisi_bulan_ini'] !=
                                       null)
-                                ...List.generate(
-                                  (siteIndexData['data_rekap']['pengeluaran_per_divisi_bulan_ini']
-                                          as List)
-                                      .length,
-                                  (index) {
-                                    final item =
-                                        siteIndexData['data_rekap']['pengeluaran_per_divisi_bulan_ini'][index];
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 2.0,
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Text(
-                                            item['divisi']?.toString() ?? '',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.normal,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                          Text(
-                                            item['total']?.toString() ?? '0',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Expanded(
+                                    child: Wrap(
+                                      runSpacing: 4,
+                                      children:
+                                          (siteIndexData['data_rekap']['pengeluaran_per_divisi_bulan_ini']
+                                                  as List)
+                                              .map<Widget>(
+                                                (item) => Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: 2.0,
+                                                      ),
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Flexible(
+                                                        child: Text(
+                                                          item['divisi']
+                                                                  ?.toString() ??
+                                                              '',
+                                                          style:
+                                                              const TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .normal,
+                                                                fontSize: 14,
+                                                              ),
+                                                          maxLines: 2,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        item['total']
+                                                                ?.toString() ??
+                                                            '0',
+                                                        style: const TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 14,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              )
+                                              .toList(),
+                                    ),
+                                  ),
                                 ),
                             ],
                           ),
@@ -813,15 +892,6 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
                       ),
                       child: Container(
                         width: MediaQuery.of(context).size.width,
-                        height:
-                            ((siteIndexData['data_rekap'] != null &&
-                                siteIndexData['data_rekap']['pengeluaran_gantung_per_divisi_bulan_ini'] !=
-                                    null)
-                            ? (siteIndexData['data_rekap']['pengeluaran_gantung_per_divisi_bulan_ini']
-                                          as List)
-                                      .length *
-                                  40.0
-                            : 320),
                         decoration: BoxDecoration(
                           color: AppColors.error,
                           borderRadius: BorderRadius.circular(16),
@@ -837,7 +907,7 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
                               Row(
                                 children: [
                                   const Icon(
-                                    Icons.battery_6_bar, // battery 3/4 icon
+                                    Icons.battery_6_bar,
                                     color: Colors.white,
                                     size: 24,
                                   ),
@@ -871,49 +941,66 @@ class _PengadaanBarangJasaScreenState extends State<PengadaanBarangJasaScreen> {
                                 thickness: 1,
                                 height: 32,
                               ),
-                              // Print pengeluaran per divisi bulan ini
+                              // Tanpa scroll, gunakan Wrap dan Expanded
                               if (siteIndexData['data_rekap'] != null &&
                                   siteIndexData['data_rekap']['pengeluaran_gantung_per_divisi_bulan_ini'] !=
                                       null)
-                                ...List.generate(
-                                  (siteIndexData['data_rekap']['pengeluaran_gantung_per_divisi_bulan_ini']
-                                          as List)
-                                      .length,
-                                  (index) {
-                                    final item =
-                                        siteIndexData['data_rekap']['pengeluaran_gantung_per_divisi_bulan_ini'][index];
-                                    return Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 2.0,
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.spaceBetween,
-                                        children: [
-                                          Flexible(
-                                            child: Text(
-                                              item['divisi']?.toString() ?? '',
-                                              style: const TextStyle(
-                                                color: Colors.white,
-                                                fontWeight: FontWeight.normal,
-                                                fontSize: 14,
-                                              ),
-                                              maxLines: 2,
-                                              overflow: TextOverflow.ellipsis,
-                                            ),
-                                          ),
-                                          Text(
-                                            item['total']?.toString() ?? '0',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 8.0),
+                                  child: Expanded(
+                                    child: Wrap(
+                                      runSpacing: 4,
+                                      children:
+                                          (siteIndexData['data_rekap']['pengeluaran_gantung_per_divisi_bulan_ini']
+                                                  as List)
+                                              .map<Widget>(
+                                                (item) => Padding(
+                                                  padding:
+                                                      const EdgeInsets.symmetric(
+                                                        vertical: 2.0,
+                                                      ),
+                                                  child: Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment
+                                                            .spaceBetween,
+                                                    children: [
+                                                      Flexible(
+                                                        child: Text(
+                                                          item['divisi']
+                                                                  ?.toString() ??
+                                                              '',
+                                                          style:
+                                                              const TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .normal,
+                                                                fontSize: 14,
+                                                              ),
+                                                          maxLines: 2,
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
+                                                      ),
+                                                      Text(
+                                                        item['total']
+                                                                ?.toString() ??
+                                                            '0',
+                                                        style: const TextStyle(
+                                                          color: Colors.white,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 14,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              )
+                                              .toList(),
+                                    ),
+                                  ),
                                 ),
                             ],
                           ),

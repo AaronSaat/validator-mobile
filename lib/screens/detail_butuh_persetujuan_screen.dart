@@ -13,21 +13,21 @@ import 'dart:io';
 import 'package:flutter_file_downloader/flutter_file_downloader.dart';
 import 'package:open_file/open_file.dart';
 
-class DetailPpbPjjScreen extends StatefulWidget {
+class DetailButuhPersetujuanScreen extends StatefulWidget {
   final int pembelianId;
   final int userId;
 
-  const DetailPpbPjjScreen({
+  const DetailButuhPersetujuanScreen({
     Key? key,
     required this.pembelianId,
     required this.userId,
   }) : super(key: key);
 
   @override
-  State<DetailPpbPjjScreen> createState() => _DetailPpbPjjScreenState();
+  State<DetailButuhPersetujuanScreen> createState() => _DetailButuhPersetujuanScreenState();
 }
 
-class _DetailPpbPjjScreenState extends State<DetailPpbPjjScreen> {
+class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScreen> {
   Map<String, dynamic>? detailData;
   bool isLoading = true;
   String? errorMsg;

@@ -14,6 +14,7 @@ class AppColors {
   static const Color orange = Color(0xFFFF9800); // Orange
   static const Color textblack = Colors.black; // Hitam
   static const Color textwhite = Colors.white; // Putih
+  static const Color textOrangeBrown = Color(0xFFB87333); // Orange Brown
   static const Color greyLight = Color(0xFFBDBDBD); // Abu-abu terang
   static const Color greyMedium = Color(0xFF757575); // Abu-abu sedang
   static const Color greyDark = Color(0xFF212121); // Abu-abu sangat gelap
