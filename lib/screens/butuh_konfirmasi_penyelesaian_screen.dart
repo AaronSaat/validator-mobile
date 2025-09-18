@@ -1,28 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:validator/screens/dashboard_screen.dart';
-import 'package:validator/screens/detail_butuh_persetujuan_screen.dart';
 import 'package:validator/screens/login_screen.dart';
 import 'package:validator/screens/searching_screen.dart';
 import 'package:validator/services/api_service.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:validator/utils/appstatus.dart';
-
 import '../utils/appcolors.dart';
 
-class ButuhPersetujuanScreen extends StatefulWidget {
+class ButuhKonfirmasiPenyelesaianScreen extends StatefulWidget {
   final String search;
-  const ButuhPersetujuanScreen({super.key, this.search = ''});
+  const ButuhKonfirmasiPenyelesaianScreen({super.key, this.search = ''});
 
   @override
-  State<ButuhPersetujuanScreen> createState() => _ButuhPersetujuanScreenState();
+  State<ButuhKonfirmasiPenyelesaianScreen> createState() =>
+      _ButuhKonfirmasiPenyelesaianScreenState();
 }
 
-class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
+class _ButuhKonfirmasiPenyelesaianScreenState
+    extends State<ButuhKonfirmasiPenyelesaianScreen> {
   String? username, email, nama;
   int userId = 0;
-  List<dynamic> persetujuanList = [];
-  String? totalDibutuhkan;
+  List<dynamic> butuhKonfirmasiPenyelesaianList = [];
   bool isLoading = true;
   String? errorMsg;
 
@@ -40,23 +39,26 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
       nama = prefs.getString('nama') ?? '';
       userId = prefs.getInt('id') ?? 0;
     });
-    _fetchPersetujuan();
+    _fetchButuhKonfirmasiPenyelesaian();
   }
 
-  Future<void> _fetchPersetujuan() async {
+  Future<void> _fetchButuhKonfirmasiPenyelesaian() async {
     setState(() {
       isLoading = true;
       errorMsg = null;
     });
     try {
-      final result = await ApiService.persetujuan(
+      final result = await ApiService.konfirmasiBarangtiba(
         userId: userId,
         search: widget.search,
       );
+      print(result);
       if (result['success'] == true) {
         setState(() {
-          persetujuanList = result['data'] ?? [];
-          totalDibutuhkan = result['total_dibutuhkan'] ?? '';
+          butuhKonfirmasiPenyelesaianList = result['dataProvider'] ?? [];
+          print(
+            'butuhKonfirmasiPenyelesaianList: $butuhKonfirmasiPenyelesaianList ',
+          );
         });
       } else {
         setState(() {
@@ -134,7 +136,7 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
             icon: const Icon(Icons.refresh, color: Colors.black),
             tooltip: 'Refresh',
             onPressed: () {
-              _fetchPersetujuan();
+              _fetchButuhKonfirmasiPenyelesaian();
             },
           ),
           IconButton(
@@ -190,7 +192,7 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => SearchingScreen(
-                                fromScreen: 'butuh_persetujuan',
+                                fromScreen: 'butuh_konfirmasi_penyelesaian',
                               ),
                             ),
                           );
@@ -246,7 +248,7 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                                       Navigator.of(context).pushReplacement(
                                         MaterialPageRoute(
                                           builder: (context) =>
-                                              const ButuhPersetujuanScreen(),
+                                              const ButuhKonfirmasiPenyelesaianScreen(),
                                         ),
                                       );
                                     },
@@ -278,7 +280,7 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => SearchingScreen(
-                                fromScreen: 'butuh_persetujuan',
+                                fromScreen: 'butuh_konfirmasi_penyelesaian',
                               ),
                             ),
                           );
@@ -303,7 +305,7 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                               const SizedBox(width: 8),
                               const Expanded(
                                 child: Text(
-                                  'Cari PPB/PJL Butuh Persetujuan...',
+                                  'Cari Konfirmasi Barang/Jasa & Penyelesaian Transaksi...',
                                   style: TextStyle(
                                     color: Colors.grey,
                                     fontSize: 14,
@@ -316,50 +318,6 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                       ),
                     ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
-                    ),
-                    child: Container(
-                      width: double.infinity,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'Total Dibutuhkan',
-                              style: TextStyle(
-                                fontWeight: FontWeight.normal,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              totalDibutuhkan ?? '-',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                                color: AppColors.textblack,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
                     padding: const EdgeInsets.only(
                       top: 8.0,
                       left: 16.0,
@@ -369,7 +327,7 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                     child: Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        'Transaksi yang butuh divalidasi',
+                        'Konfirmasi Barang Tiba & Penyelesaian Transaksi',
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
@@ -396,7 +354,7 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  'Showing ${persetujuanList.length} items',
+                                  'Showing ${butuhKonfirmasiPenyelesaianList.length} items',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.normal,
                                     fontSize: 12,
@@ -412,28 +370,27 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                   ),
                   Expanded(
                     child: ListView.builder(
-                      itemCount: persetujuanList.length,
+                      itemCount: butuhKonfirmasiPenyelesaianList.length,
                       itemBuilder: (context, index) {
-                        final item = persetujuanList[index];
+                        final item = butuhKonfirmasiPenyelesaianList[index];
                         return GestureDetector(
                           onTap: () async {
-                            final result = await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    DetailButuhPersetujuanScreen(
-                                      pembelianId: item['id_pembelian'],
-                                      userId: userId,
-                                    ),
-                              ),
-                            );
-                            // Jika kembali dari detail dan result == true, refresh data
-                            if (result == 'reload') {
-                              _fetchPersetujuan();
-                            }
+                            // final result = await Navigator.of(context).push(
+                            //   MaterialPageRoute(
+                            //     builder: (context) => DetailButuhKonfirmasiPenyelesaianScreen(
+                            //       pembelianId: item['id_pembelian'],
+                            //       userId: userId,
+                            //     ),
+                            //   ),
+                            // );
+                            // // Jika kembali dari detail dan result == true, refresh data
+                            // if (result == 'reload') {
+                            //   _fetchButuhKonfirmasiPenyelesaian();
+                            // }
                           },
                           child: SizedBox(
                             width: MediaQuery.of(context).size.width,
-                            height: MediaQuery.of(context).size.height * 0.22,
+                            height: MediaQuery.of(context).size.height * 0.45,
                             child: Card(
                               margin: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -471,11 +428,11 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            item['nama_status'] ?? '-',
+                                            item['status_text'] ?? '-',
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontWeight: FontWeight.bold,
-                                              fontSize: 10,
+                                              fontSize: 14,
                                             ),
                                             textAlign: TextAlign.center,
                                           ),
@@ -504,6 +461,14 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                                           ),
                                           const SizedBox(height: 8),
                                           Text(
+                                            '${item['tgl_uangkeluar'] ?? '-'}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.normal,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
                                             'Divisi: ${item['nama_divisi'] ?? '-'}',
                                             style: const TextStyle(
                                               fontSize: 12,
@@ -519,13 +484,13 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                                           ),
                                           Text(
                                             // ignore: prefer_interpolation_to_compose_strings
-                                            'Keterangan/Keperluan: ' +
-                                                ((item['keterangan']
+                                            'Keperluan: ' +
+                                                ((item['keperluan']
                                                             ?.toString()
                                                             .toLowerCase() ==
-                                                        'keterangan')
+                                                        'keperluan')
                                                     ? '-'
-                                                    : (item['keterangan'] ??
+                                                    : (item['keperluan'] ??
                                                           '-')),
                                             style: const TextStyle(
                                               fontSize: 12,
@@ -534,7 +499,27 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                                           ),
                                           const SizedBox(height: 8),
                                           Text(
-                                            (item['total_biaya'] ?? '-'),
+                                            'Tunai/Transfer:',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.normal,
+                                            ),
+                                          ),
+                                          Text(
+                                            (item['tunai_transfer'] != null
+                                                ? item['tunai_transfer']
+                                                      .toString()
+                                                      .split(';')
+                                                      .join('\n')
+                                                : '-'),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.normal,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            (item['bayar_total'] ?? '-'),
                                             style: const TextStyle(
                                               fontSize: 14,
                                               fontWeight: FontWeight.bold,

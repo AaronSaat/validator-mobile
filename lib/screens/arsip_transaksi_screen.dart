@@ -1,28 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:validator/screens/dashboard_screen.dart';
-import 'package:validator/screens/detail_butuh_persetujuan_screen.dart';
 import 'package:validator/screens/login_screen.dart';
 import 'package:validator/screens/searching_screen.dart';
 import 'package:validator/services/api_service.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:validator/utils/appstatus.dart';
-
+import 'package:validator/utils/date_formatter.dart';
 import '../utils/appcolors.dart';
 
-class ButuhPersetujuanScreen extends StatefulWidget {
+class ArsipTransaksiScreen extends StatefulWidget {
+  final String jenis;
+  final String tglPengajuan;
+  final String tglPengajuanAkhir;
   final String search;
-  const ButuhPersetujuanScreen({super.key, this.search = ''});
+  const ArsipTransaksiScreen({
+    super.key,
+    this.jenis = '',
+    this.tglPengajuan = '',
+    this.tglPengajuanAkhir = '',
+    this.search = '',
+  });
 
   @override
-  State<ButuhPersetujuanScreen> createState() => _ButuhPersetujuanScreenState();
+  State<ArsipTransaksiScreen> createState() => _ArsipTransaksiScreenState();
 }
 
-class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
+class _ArsipTransaksiScreenState extends State<ArsipTransaksiScreen> {
   String? username, email, nama;
   int userId = 0;
-  List<dynamic> persetujuanList = [];
-  String? totalDibutuhkan;
+  List<dynamic> ArsipTransaksiList = [];
   bool isLoading = true;
   String? errorMsg;
 
@@ -33,6 +40,9 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
   }
 
   Future<void> _loadUserInfo() async {
+    print('Loading user info from SharedPreferences');
+    print('widget.tglPengajuan: ${widget.tglPengajuan}');
+    print('widget.tglPengajuanAkhir: ${widget.tglPengajuanAkhir}');
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       username = prefs.getString('username') ?? '';
@@ -40,23 +50,26 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
       nama = prefs.getString('nama') ?? '';
       userId = prefs.getInt('id') ?? 0;
     });
-    _fetchPersetujuan();
+    _fetchArsipTransaksi();
   }
 
-  Future<void> _fetchPersetujuan() async {
+  Future<void> _fetchArsipTransaksi() async {
     setState(() {
       isLoading = true;
       errorMsg = null;
     });
     try {
-      final result = await ApiService.persetujuan(
+      final result = await ApiService.arsipTransaksi(
         userId: userId,
+        jenis: widget.jenis,
+        tgl_pengajuan: widget.tglPengajuan,
+        tgl_pengajuan_akhir: widget.tglPengajuanAkhir,
         search: widget.search,
       );
+      print(result);
       if (result['success'] == true) {
         setState(() {
-          persetujuanList = result['data'] ?? [];
-          totalDibutuhkan = result['total_dibutuhkan'] ?? '';
+          ArsipTransaksiList = result['dataProvider'] ?? [];
         });
       } else {
         setState(() {
@@ -72,6 +85,38 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
         isLoading = false;
       });
     }
+  }
+
+  String formatTanggal(String tanggal) {
+    if (tanggal.isEmpty) return '-';
+    try {
+      // Ganti '/' dengan '-' agar bisa diparse oleh DateTime.parse
+      String formatted = tanggal.replaceAll('/', '-');
+      DateTime dt = DateTime.parse(formatted);
+
+      // Format ke "dd MMMM yyyy"
+      return '${dt.day.toString().padLeft(2, '0')} ${namaBulan(dt.month)} ${dt.year}';
+    } catch (e) {
+      return tanggal;
+    }
+  }
+
+  String namaBulan(int bulan) {
+    const bulanList = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return bulanList[bulan - 1];
   }
 
   @override
@@ -134,7 +179,7 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
             icon: const Icon(Icons.refresh, color: Colors.black),
             tooltip: 'Refresh',
             onPressed: () {
-              _fetchPersetujuan();
+              _fetchArsipTransaksi();
             },
           ),
           IconButton(
@@ -190,7 +235,7 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => SearchingScreen(
-                                fromScreen: 'butuh_persetujuan',
+                                fromScreen: 'arsip_transaksi',
                               ),
                             ),
                           );
@@ -246,7 +291,7 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                                       Navigator.of(context).pushReplacement(
                                         MaterialPageRoute(
                                           builder: (context) =>
-                                              const ButuhPersetujuanScreen(),
+                                              const ArsipTransaksiScreen(),
                                         ),
                                       );
                                     },
@@ -278,7 +323,7 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => SearchingScreen(
-                                fromScreen: 'butuh_persetujuan',
+                                fromScreen: 'arsip_transaksi',
                               ),
                             ),
                           );
@@ -290,7 +335,7 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                             borderRadius: BorderRadius.circular(24),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.grey.withOpacity(0.2),
+                                color: Colors.grey.withAlpha(20),
                                 blurRadius: 6,
                                 offset: const Offset(0, 2),
                               ),
@@ -303,7 +348,7 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                               const SizedBox(width: 8),
                               const Expanded(
                                 child: Text(
-                                  'Cari PPB/PJL Butuh Persetujuan...',
+                                  'Filter Pencarian Arsip Transaksi',
                                   style: TextStyle(
                                     color: Colors.grey,
                                     fontSize: 14,
@@ -315,125 +360,138 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                         ),
                       ),
                     ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
-                    ),
-                    child: Container(
-                      width: double.infinity,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.grey.withOpacity(0.2),
-                            blurRadius: 6,
-                            offset: const Offset(0, 2),
+                  Column(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.only(
+                          top: 8.0,
+                          left: 16.0,
+                          right: 16.0,
+                        ),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Transaksi Pembelian ',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
                           ),
-                        ],
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text(
-                              'Total Dibutuhkan',
-                              style: TextStyle(
-                                fontWeight: FontWeight.normal,
-                                fontSize: 12,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              totalDibutuhkan ?? '-',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 20,
-                                color: AppColors.textblack,
-                              ),
-                            ),
-                          ],
                         ),
                       ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.only(
-                      top: 8.0,
-                      left: 16.0,
-                      right: 16.0,
-                      bottom: 8.0,
-                    ),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Transaksi yang butuh divalidasi',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0,
-                      vertical: 8.0,
-                    ),
-                    child: Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(color: AppColors.primary),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          children: [
-                            // Icon dan text di ujung kiri
-                            const Icon(
-                              Icons.list_alt,
-                              color: AppColors.textwhite,
-                            ),
-                            const SizedBox(width: 8),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 8.0,
+                        ),
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(color: AppColors.lightblue),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
                               children: [
-                                Text(
-                                  'Showing ${persetujuanList.length} items',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.normal,
-                                    fontSize: 12,
-                                    color: AppColors.textwhite,
-                                  ),
+                                // Icon dan text di ujung kiri
+                                const Icon(
+                                  Icons.calendar_today,
+                                  color: AppColors.textwhite,
+                                ),
+                                const SizedBox(width: 8),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Menampilkan tanggal:',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        color: AppColors.textwhite,
+                                      ),
+                                    ),
+                                    Text(
+                                      '${formatTanggal(widget.tglPengajuan)} - ${formatTanggal(widget.tglPengajuanAkhir)}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        color: AppColors.textwhite,
+                                      ),
+                                    ),
+                                    Text(
+                                      'Jenis Pembayaran: ${widget.jenis}',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        color: AppColors.textwhite,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ],
                             ),
-                          ],
+                          ),
                         ),
                       ),
-                    ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 8.0,
+                        ),
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(color: AppColors.success),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              children: [
+                                // Icon dan text di ujung kiri
+                                const Icon(
+                                  Icons.list_alt,
+                                  color: AppColors.textwhite,
+                                ),
+                                const SizedBox(width: 8),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Showing ${ArsipTransaksiList.length} items',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.normal,
+                                        fontSize: 12,
+                                        color: AppColors.textwhite,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                   Expanded(
                     child: ListView.builder(
-                      itemCount: persetujuanList.length,
+                      itemCount: ArsipTransaksiList.length,
                       itemBuilder: (context, index) {
-                        final item = persetujuanList[index];
+                        final item = ArsipTransaksiList[index];
                         return GestureDetector(
                           onTap: () async {
-                            final result = await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    DetailButuhPersetujuanScreen(
-                                      pembelianId: item['id_pembelian'],
-                                      userId: userId,
-                                    ),
-                              ),
-                            );
-                            // Jika kembali dari detail dan result == true, refresh data
-                            if (result == 'reload') {
-                              _fetchPersetujuan();
-                            }
+                            // final result = await Navigator.of(context).push(
+                            //   MaterialPageRoute(
+                            //     builder: (context) => DetailArsipTransaksiScreen(
+                            //       pembelianId: item['id_pembelian'],
+                            //       userId: userId,
+                            //     ),
+                            //   ),
+                            // );
+                            // // Jika kembali dari detail dan result == true, refresh data
+                            // if (result == 'reload') {
+                            //   _fetchArsipTransaksi();
+                            // }
                           },
                           child: SizedBox(
                             width: MediaQuery.of(context).size.width,
-                            height: MediaQuery.of(context).size.height * 0.22,
+                            height: MediaQuery.of(context).size.height * 0.4,
                             child: Card(
                               margin: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -471,11 +529,21 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                                           ),
                                           const SizedBox(height: 4),
                                           Text(
-                                            item['nama_status'] ?? '-',
+                                            item['status_text'] ?? '-',
                                             style: const TextStyle(
                                               color: Colors.white,
                                               fontWeight: FontWeight.bold,
-                                              fontSize: 10,
+                                              fontSize: 14,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            item['tgl_uangkeluar'] ?? '-',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 14,
                                             ),
                                             textAlign: TextAlign.center,
                                           ),
@@ -533,13 +601,75 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                                             ),
                                           ),
                                           const SizedBox(height: 8),
-                                          Text(
-                                            (item['total_biaya'] ?? '-'),
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
+                                          if (item['selisih_bayar'] == null)
+                                            Text(
+                                              (item['bayar_total'] ?? '-'),
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            )
+                                          else
+                                            Container(
+                                              padding: const EdgeInsets.all(8),
+                                              decoration: BoxDecoration(
+                                                color: AppColors.error,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black
+                                                        .withAlpha(20),
+                                                    blurRadius: 6,
+                                                    offset: const Offset(0, 2),
+                                                  ),
+                                                ],
+                                              ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    (item['bayar_total'] ??
+                                                        '-'),
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                      color: Colors.white,
+                                                      decoration: TextDecoration
+                                                          .lineThrough,
+                                                      decorationColor:
+                                                          Colors.white,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    (item['bayar_realisasi'] ??
+                                                        '-'),
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                      color: Colors.white,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  const Text(
+                                                    'Uang kembali:',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                  Text(
+                                                    (item['selisih_bayar'] ??
+                                                        '-'),
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                      color: Colors.white,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
                                             ),
-                                          ),
                                         ],
                                       ),
                                     ),

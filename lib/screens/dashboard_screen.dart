@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:validator/screens/detail_butuh_persetujuan_screen.dart';
+import 'package:validator/screens/arsip_transaksi_pernah_dikembalikan_oleh_anda_screen.dart';
+import 'package:validator/screens/arsip_transaksi_screen.dart';
+import 'package:validator/screens/butuh_konfirmasi_penyelesaian_screen.dart';
 import 'package:validator/screens/login_screen.dart';
 import 'package:validator/screens/butuh_persetujuan_screen.dart';
 import 'package:validator/screens/transaksi_gantung_screen.dart';
 import 'package:validator/services/api_service.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:validator/utils/date_formatter.dart';
 import 'package:intl/intl.dart';
 import '../utils/appcolors.dart';
+import 'dart:io';
+import 'package:app_badge_plus/app_badge_plus.dart';
+import 'package:permission_handler/permission_handler.dart' as permission_handler;
 
 class DashboardScreen extends StatefulWidget {
   final String?
@@ -28,12 +32,32 @@ class _DashboardScreenState extends State<DashboardScreen> {
   bool isLoading = false;
   String? errorMsg;
 
+  bool isSupported = false;
+   bool isNotificationAllowed = false;
+
   @override
   void initState() {
     super.initState();
 
+    allowNotification();
+    AppBadgePlus.isSupported().then((value) {
+      isSupported = value;
+      setState(() {});
+    });
+
+    // Contoh: update badge dari beforeActionData
+    Future.delayed(Duration.zero, () async {
+      // Simulasi ambil data dari API atau state
+      final beforeActionData = {
+        'need_validation': 5,
+      }; // Ganti dengan data asli Anda
+      final badgeCount = beforeActionData['need_validation'] ?? 0;
+      AppBadgePlus.updateBadge(badgeCount);
+      print('AppBadgePlus isSupported: $isSupported, count: $badgeCount');
+    });
+
     // untuk handle multiple pop context karena ada searching
-    print('SharedPreferences prose  s : fromScreen: ${widget.fromScreen}');
+    print('SharedPreferences proses: fromScreen: ${widget.fromScreen}');
     if (widget.fromScreen == 'login') {
       _loadUserInfo();
     }
@@ -111,8 +135,45 @@ class _DashboardScreenState extends State<DashboardScreen> {
     }
   }
 
+  String getTanggalPengajuanHariIni() {
+    final now = DateTime.now();
+    return DateFormat('yyyy/MM/dd').format(now);
+  }
+
+  String getTanggalPengajuan2BulanSebelumnya() {
+    final now = DateTime.now();
+    final duaBulanSebelum = DateTime(now.year, now.month - 2, now.day);
+    return DateFormat('yyyy/MM/dd').format(duaBulanSebelum);
+  }
+
+  void allowNotification() async {
+    if (Platform.isAndroid || Platform.isIOS) {
+      if (await permission_handler.Permission.notification.isGranted) {
+        isNotificationAllowed = true;
+        setState(() {});
+      } else {
+        await permission_handler.Permission.notification.request().then((value) {
+          if (value.isGranted) {
+            isNotificationAllowed = true;
+            setState(() {});
+            print('Permission is granted');
+          } else {
+            print('Permission is not granted');
+            isNotificationAllowed = false;
+            setState(() {});
+          }
+        });
+      }
+    } else {
+      print('This platform is not supported for notification permissions.');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final tglPengajuan = getTanggalPengajuanHariIni();
+    final tglPengajuanAkhir = getTanggalPengajuan2BulanSebelumnya();
+    print('tglPengajuan: $tglPengajuan, tglPengajuanAkhir: $tglPengajuanAkhir');
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -345,7 +406,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       textAlign: TextAlign.end,
                                     ),
                                     onTap: () {
-                                      // TODO: Navigasi ke halaman konfirmasi barang/jasa tiba
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              ButuhKonfirmasiPenyelesaianScreen(),
+                                        ),
+                                      );
                                     },
                                   ),
                                 ),
@@ -502,7 +568,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       textAlign: TextAlign.end,
                                     ),
                                     onTap: () {
-                                      // TODO: Navigasi ke halaman arsip
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              ArsipTransaksiScreen(
+                                                search: '',
+                                                tglPengajuan: tglPengajuan,
+                                                tglPengajuanAkhir:
+                                                    tglPengajuanAkhir,
+                                                jenis: 'Semua',
+                                              ),
+                                        ),
+                                      );
                                     },
                                   ),
                                 ),
@@ -523,24 +600,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                 SizedBox(
                                   width: double.infinity,
                                   child: ListTile(
-                                    contentPadding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 8,
-                                    ),
-                                    title: Text(
-                                      '\n',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 8,
-                                        color: Colors.white,
-                                      ),
-                                      textAlign: TextAlign.end,
+                                    contentPadding: const EdgeInsets.only(
+                                      left: 8,
+                                      right: 8,
+                                      top: 18,
+                                      bottom: 8,
                                     ),
                                     subtitle: const Text(
-                                      'Arsip\nTransaksi',
+                                      'Arsip Transaksi\nPernah Dikembalikan\noleh Anda',
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
-                                        fontSize: 16,
+                                        fontSize: 14,
                                         color: Colors.white,
                                         shadows: [
                                           Shadow(
@@ -553,7 +623,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       textAlign: TextAlign.end,
                                     ),
                                     onTap: () {
-                                      // TODO: Navigasi ke halaman arsip dikembalikan
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              ArsipTransaksiPernahDikembalikanOlehAndaScreen(),
+                                        ),
+                                      );
                                     },
                                   ),
                                 ),
@@ -715,7 +790,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       // Tambahkan touch callback untuk detail saat ditekan
                                       lineTouchData: LineTouchData(
                                         touchTooltipData: LineTouchTooltipData(
-                                          getTooltipColor:(touchedSpot) => AppColors.primary,
+                                          getTooltipColor: (touchedSpot) =>
+                                              AppColors.primary,
                                           getTooltipItems: (touchedSpots) {
                                             return touchedSpots.map((spot) {
                                               final bulan = spot.x.toInt();

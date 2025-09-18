@@ -1,0 +1,2012 @@
+import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:validator/screens/setujui_transaksi_pembelian_screen.dart';
+import 'package:validator/utils/appcolors.dart';
+import 'package:validator/utils/globalvariables.dart';
+import '../services/api_service.dart';
+import 'package:photo_view/photo_view.dart';
+import 'package:flutter_pdfview/flutter_pdfview.dart';
+import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'package:flutter_file_downloader/flutter_file_downloader.dart';
+import 'package:open_file/open_file.dart';
+
+class DetailTransaksiGantungScreen extends StatefulWidget {
+  final int idBayar;
+  final int userId;
+
+  const DetailTransaksiGantungScreen({
+    Key? key,
+    required this.idBayar,
+    required this.userId,
+  }) : super(key: key);
+
+  @override
+  State<DetailTransaksiGantungScreen> createState() => _DetailTransaksiGantungScreenState();
+}
+
+class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScreen> {
+  Map<String, dynamic>? detailData;
+  bool isLoading = true;
+  String? errorMsg;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchDetail();
+  }
+
+  Future<void> _fetchDetail() async {
+    setState(() {
+      isLoading = true;
+      errorMsg = null;
+    });
+    try {
+      final result = await ApiService.pembayaranView(
+        idBayar: widget.idBayar.toString(),
+        userId: widget.userId.toString(),
+      );
+      setState(() {
+        detailData = result;
+      });
+    } catch (e) {
+      setState(() {
+        errorMsg = e.toString();
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  void imageViewer(BuildContext context, String imageUrl) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.all(8),
+        child: Stack(
+          children: [
+            SizedBox(
+              width: double.infinity,
+              height: MediaQuery.of(context).size.height * 0.7,
+              child: PhotoView(
+                imageProvider: NetworkImage(imageUrl),
+                backgroundDecoration: const BoxDecoration(
+                  color: Colors.transparent,
+                ),
+                loadingBuilder: (context, event) =>
+                    Center(child: CircularProgressIndicator()),
+              ),
+            ),
+            Positioned(
+              bottom: 48,
+              left: 0,
+              right: 0,
+              child: Center(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  child: IconButton(
+                    icon: const Icon(
+                      Icons.close,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                    tooltip: 'Tutup',
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void pdfViewer(BuildContext context, String pdfUrl) {
+    () async {
+      String localPath = pdfUrl;
+      if (pdfUrl.startsWith('http')) {
+        // Tampilkan loading
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => Center(child: CircularProgressIndicator()),
+        );
+        try {
+          final dir = await getTemporaryDirectory();
+          final fileName = pdfUrl.split('/').last;
+          final savePath = '${dir.path}/$fileName';
+          await Dio().download(pdfUrl, savePath);
+          localPath = savePath;
+        } catch (e) {
+          print('Gagal mengunduh PDF: $e');
+          Navigator.of(context).pop();
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Gagal mengunduh PDF: $e')));
+          return;
+        }
+        Navigator.of(context).pop(); // Tutup loading
+      }
+      // Tampilkan PDFView dengan file lokal
+      showDialog(
+        context: context,
+        builder: (context) => Dialog(
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(8),
+          child: SizedBox(
+            width: double.infinity,
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: PDFView(
+              filePath: localPath,
+              enableSwipe: true,
+              swipeHorizontal: true,
+              autoSpacing: true,
+              pageFling: true,
+              onError: (error) {
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Gagal memuat PDF: $error')),
+                );
+              },
+              onPageError: (page, error) {
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Gagal memuat halaman $page: $error')),
+                );
+              },
+            ),
+          ),
+        ),
+      );
+    }();
+  }
+
+  Future<void> openFile(String filePath) async {
+    try {
+      await OpenFile.open(filePath);
+    } catch (e) {
+      print('Gagal membuka file: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Gagal membuka file: $e')));
+    }
+  }
+
+  void downloadFile(String url, {String? fileName}) {
+    () async {
+      // Show loading dialog
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => Center(
+          child: LoadingAnimationWidget.beat(color: AppColors.white, size: 60),
+        ),
+      );
+      try {
+        final response = await http.get(Uri.parse(url));
+        if (response.statusCode == 200) {
+          final dir = await getApplicationDocumentsDirectory();
+          final filesDir = Directory('${dir.path}/files');
+          if (!await filesDir.exists()) {
+            await filesDir.create(recursive: true);
+          }
+          final saveName = fileName ?? url.split('/').last;
+          final file = File('${filesDir.path}/$saveName');
+          await file.writeAsBytes(response.bodyBytes);
+          if (!mounted) return;
+          Navigator.of(context).pop(); // Close loading
+          print('Download completed: ${file.path}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Download selesai: Silakan simpan ke folder anda\n${file.path}',
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close, color: Colors.white),
+                    tooltip: 'Tutup',
+                    onPressed: () {
+                      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    },
+                  ),
+                ],
+              ),
+              duration: const Duration(seconds: 8),
+              action: SnackBarAction(
+                label: 'Buka File',
+                onPressed: () async {
+                  await openFile(file.path);
+                },
+              ),
+            ),
+          );
+        } else {
+          if (!mounted) return;
+          Navigator.of(context).pop(); // Close loading
+          print('Download error: status ${response.statusCode}');
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Download error: status ${response.statusCode}'),
+            ),
+          );
+        }
+      } catch (e) {
+        if (!mounted) return;
+        Navigator.of(context).pop(); // Close loading
+        print('Download error: $e');
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Download error: $e')));
+      }
+    }();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Pembayaran View Validator'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            tooltip: 'Refresh',
+            onPressed: _fetchDetail,
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          Container(
+            width: MediaQuery.of(context).size.width,
+            height: MediaQuery.of(context).size.height,
+            color: AppColors.baseBackground,
+          ),
+          isLoading
+              ? Expanded(
+                  child: Center(
+                    child: LoadingAnimationWidget.beat(
+                      color: Colors.white,
+                      size: 80,
+                    ),
+                  ),
+                )
+              : errorMsg != null
+              ? Center(child: Text(errorMsg!))
+              : detailData == null
+              ? const Center(child: Text('Data tidak ditemukan'))
+              : SingleChildScrollView(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+
+                      // Model Pembelian
+                      // Judul Pengadaan Jasa Luar
+                      Text(
+                        detailData!['model_pembelian']['barang_jasa'] == 1
+                            ? 'Data Barang yang dibeli'
+                            : 'Data Jasa Luar yang diajukan',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      if (detailData?['model_pembelian'] != null) ...[
+                        Container(
+                          margin: const EdgeInsets.symmetric(vertical: 6.0),
+                          decoration: BoxDecoration(  
+                            border: Border.all(
+                              color: AppColors.greyLight,
+                              width: 1.2,
+                            ),
+                            borderRadius: BorderRadius.circular(8),
+                            color: Colors.white, // background putih
+                          ),
+                          child: Table(
+                            border: TableBorder.all(
+                              color: AppColors.greyLight,
+                              width: 1.2,
+                            ),
+                            columnWidths: const {
+                              0: FlexColumnWidth(1),
+                              1: FlexColumnWidth(1),
+                            },
+                            children: [
+                              TableRow(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      detailData!['model_pembelian']['barang_jasa'] ==
+                                              1
+                                          ? 'No PPB (Pembelian Barang)'
+                                          : 'No PJL (Jasa Luar)',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      '${detailData!['model_pembelian']['no_ppb'] ?? '-'}',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              TableRow(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      'Tanggal Pengajuan',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      detailData!['model_pembelian']['tgl_pengajuan'],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              TableRow(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      'Keterangan/Keperluan',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      (detailData!['model_pembelian']['keterangan']
+                                                  ?.toString()
+                                                  .toLowerCase() ==
+                                              'keterangan')
+                                          ? '-'
+                                          : '${detailData!['model_pembelian']['keterangan'] ?? '-'}',
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              TableRow(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      'Email Notifikasi',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      '${detailData!['model_pembelian']['email_notifikasi'] ?? '-'}',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              TableRow(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      detailData!['model_pembelian']['keterangan_databayar'],
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child:
+                                        detailData!['model_pembelian']['tanggal_databayar'] ==
+                                            'Belum dilakukan'
+                                        ? const Text(
+                                            'Belum dilakukan',
+                                            style: TextStyle(
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                          )
+                                        : Text(
+                                            detailData!['model_pembelian']['tanggal_databayar'] ??
+                                                '-',
+                                            style: const TextStyle(
+                                              fontStyle: FontStyle.normal,
+                                            ),
+                                          ),
+                                  ),
+                                ],
+                              ),
+                              TableRow(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      'Divisi',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      '${detailData!['model_pembelian']['nama_divisi'] ?? '-'}',
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              TableRow(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      detailData!['model_pembelian']['barang_jasa'] ==
+                                              1
+                                          ? 'Status PPB'
+                                          : 'Status PJL',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      color:
+                                          detailData!['model_pembelian']['status'] ==
+                                              1
+                                          ? AppColors.lightblue
+                                          : detailData!['model_pembelian']['status'] ==
+                                                101
+                                          ? AppColors.orange
+                                          : Colors.grey[300],
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                      horizontal: 8,
+                                    ),
+                                    alignment: Alignment.centerLeft,
+                                    child: Text(
+                                      '${detailData!['model_pembelian']['keterangan_status'] ?? '-'}',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: AppColors.textwhite,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+
+                      // Data Provider - Daftar Jasa Luar
+                      if (detailData?['dataProvider'] != null &&
+                          detailData!['dataProvider'] is List &&
+                          detailData!['dataProvider'].isNotEmpty &&
+                          detailData!['dataProvider'][0]['id_jasaluar_detail'] !=
+                              null) ...[
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(vertical: 6.0),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10.0,
+                            horizontal: 12.0,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Daftar Jasa Luar',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Table(
+                                border: TableBorder.symmetric(
+                                  inside: BorderSide(
+                                    color: AppColors.greyLight,
+                                    width: 1.2,
+                                  ),
+                                ),
+                                columnWidths: const {
+                                  0: FlexColumnWidth(0.5),
+                                  1: FlexColumnWidth(3.5),
+                                },
+                                children: [
+                                  for (var entry
+                                      in detailData!['dataProvider']
+                                          .asMap()
+                                          .entries)
+                                    TableRow(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 8,
+                                            horizontal: 8,
+                                          ),
+                                          alignment: Alignment.center,
+                                          child: Text(
+                                            '${entry.key + 1}',
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 18,
+                                            ),
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 8,
+                                            horizontal: 8,
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                '${entry.value['jenis_pekerjaan'] ?? '-'}',
+                                                style: const TextStyle(
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.business,
+                                                    size: 18,
+                                                    color: AppColors.greyMedium,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    'Supplier Jasa: ${entry.value['supplier_jasa'] ?? '-'}',
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.calendar_today,
+                                                    size: 18,
+                                                    color: AppColors.greyMedium,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    'Tanggal Diselesaikan: ${entry.value['tgl_diselesaikan'] ?? '-'}',
+                                                    style: const TextStyle(
+                                                      fontSize: 14,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.info_outline,
+                                                    size: 18,
+                                                    color: AppColors.greyMedium,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Expanded(
+                                                    child: Text(
+                                                      'Keterangan Item: ${(entry.value['keterangan_item']?.toString().toLowerCase() == 'keterangan item') ? '-' : '${entry.value['keterangan_item'] ?? '-'}'}',
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                      ),
+                                                      maxLines: 3,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+
+                                              // Container(
+                                              //   margin:
+                                              //       const EdgeInsets.symmetric(
+                                              //         vertical: 4,
+                                              //       ),
+                                              //   padding:
+                                              //       const EdgeInsets.symmetric(
+                                              //         vertical: 6,
+                                              //         horizontal: 10,
+                                              //       ),
+                                              //   decoration: BoxDecoration(
+                                              //     color: AppColors.lightblue
+                                              //         .withAlpha(50),
+                                              //     borderRadius:
+                                              //         BorderRadius.circular(8),
+                                              //     border: Border.all(
+                                              //       color: AppColors.secondary,
+                                              //     ),
+                                              //   ),
+                                              //   child: Text(
+                                              //     'Estimasi Biaya: ${entry.value['estimasi_biaya'] ?? '-'}',
+                                              //     style: const TextStyle(
+                                              //       fontWeight: FontWeight.w500,
+                                              //       fontSize: 12,
+                                              //     ),
+                                              //   ),
+                                              // ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      // Data Provider - Daftar Jasa Luar
+                      if (detailData?['dataProvider'] != null &&
+                          detailData!['dataProvider'] is List &&
+                          detailData!['dataProvider'].isNotEmpty &&
+                          detailData!['dataProvider'][0]['id_pembelian_detail'] !=
+                              null) ...[
+                        Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.symmetric(vertical: 6.0),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10.0,
+                            horizontal: 12.0,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Daftar Barang Detail',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Table(
+                                border: TableBorder.symmetric(
+                                  inside: BorderSide(
+                                    color: AppColors.greyLight,
+                                    width: 1.2,
+                                  ),
+                                ),
+                                columnWidths: const {
+                                  0: FlexColumnWidth(0.5),
+                                  1: FlexColumnWidth(3.5),
+                                },
+                                children: [
+                                  for (var entry
+                                      in detailData!['dataProvider']
+                                          .asMap()
+                                          .entries)
+                                    (() {
+                                      final jumlah =
+                                          int.tryParse(
+                                            entry.value['jumlah'].toString(),
+                                          ) ??
+                                          0;
+                                      final estimasiHargaSatuan =
+                                          int.tryParse(
+                                            (entry.value['estimasi_harga_satuan']
+                                                    ?.toString()
+                                                    .replaceAll('.00', '')) ??
+                                                '0',
+                                          ) ??
+                                          0;
+                                      final total =
+                                          (jumlah > 0 &&
+                                              estimasiHargaSatuan > 0)
+                                          ? (jumlah * estimasiHargaSatuan)
+                                                .toString()
+                                          : '-.00';
+                                      // Format total dengan koma dan tambahkan ".00"
+                                      final totalEstimasi = total != '-.00'
+                                          ? '${(jumlah * estimasiHargaSatuan).toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (match) => '${match.group(1)},')}.00'
+                                          : '-.00';
+
+                                      final estimasiHargaSatuanFormatted =
+                                          (entry.value['estimasi_harga_satuan'] !=
+                                                  null &&
+                                              entry
+                                                  .value['estimasi_harga_satuan']
+                                                  .toString()
+                                                  .isNotEmpty &&
+                                              entry.value['estimasi_harga_satuan']
+                                                      .toString() !=
+                                                  '0')
+                                          ? '${entry.value['estimasi_harga_satuan'].toString().replaceAll('.00', '').replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (match) => '${match.group(1)},')}.00'
+                                          : '-';
+                                      return TableRow(
+                                        children: [
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 8,
+                                              horizontal: 8,
+                                            ),
+                                            alignment: Alignment.center,
+                                            child: Text(
+                                              '${entry.key + 1}',
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 18,
+                                              ),
+                                            ),
+                                          ),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 8,
+                                              horizontal: 8,
+                                            ),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  '${entry.value['nama_barang'] ?? '-'}',
+                                                  style: const TextStyle(
+                                                    fontSize: 18,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 8),
+                                                Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.local_offer,
+                                                      size: 18,
+                                                      color:
+                                                          AppColors.greyMedium,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      'Merk: ${entry.value['merk'] ?? '-'}',
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.confirmation_number,
+                                                      size: 18,
+                                                      color:
+                                                          AppColors.greyMedium,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      'Jumlah: ${entry.value['jumlah'] ?? '-'}',
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.straighten,
+                                                      size: 18,
+                                                      color:
+                                                          AppColors.greyMedium,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      'Satuan: ${entry.value['satuan'] ?? '-'}',
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.attach_money,
+                                                      size: 18,
+                                                      color:
+                                                          AppColors.greyMedium,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      'Estimasi Harga Satuan:',
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    const SizedBox(width: 22),
+                                                    Text(
+                                                      '${estimasiHargaSatuanFormatted}',
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.calculate,
+                                                      size: 18,
+                                                      color:
+                                                          AppColors.greyMedium,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      'Total Estimasi:',
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                Row(
+                                                  children: [
+                                                    const SizedBox(width: 22),
+                                                    Text(
+                                                      '$totalEstimasi',
+                                                      style: TextStyle(
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.calendar_today,
+                                                      size: 18,
+                                                      color:
+                                                          AppColors.greyMedium,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Text(
+                                                      'Tanggal Dibutuhkan: ${entry.value['tgl_dibutuhkan'] ?? '-'}',
+                                                      style: const TextStyle(
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.assignment,
+                                                      size: 18,
+                                                      color:
+                                                          AppColors.greyMedium,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Expanded(
+                                                      child: Text(
+                                                        'Keperluan: ${(entry.value['keperluan']?.toString().toLowerCase() == 'keperluan') ? '-' : '${entry.value['keperluan'] ?? '-'}'}',
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                        ),
+                                                        maxLines: 3,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.location_on,
+                                                      size: 18,
+                                                      color:
+                                                          AppColors.greyMedium,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Expanded(
+                                                      child: Text(
+                                                        'Lokasi Penggunaan: ${(entry.value['lokasi']?.toString().toLowerCase() == 'lokasi') ? '-' : '${entry.value['lokasi'] ?? '-'}'}',
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                        ),
+                                                        maxLines: 3,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Row(
+                                                  children: [
+                                                    const Icon(
+                                                      Icons.info_outline,
+                                                      size: 18,
+                                                      color:
+                                                          AppColors.greyMedium,
+                                                    ),
+                                                    const SizedBox(width: 4),
+                                                    Expanded(
+                                                      child: Text(
+                                                        'Keterangan Item: ${(entry.value['keterangan_item']?.toString().toLowerCase() == 'keterangan item') ? '-' : '${entry.value['keterangan_item'] ?? '-'}'}',
+                                                        style: const TextStyle(
+                                                          fontSize: 14,
+                                                        ),
+                                                        maxLines: 3,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    })(),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                      // Rekap Pembelian
+                      if (detailData?['rekap_pembelian'] != null) ...[
+                        Container(
+                          margin: const EdgeInsets.symmetric(vertical: 6.0),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10.0,
+                            horizontal: 12.0,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Card(
+                                      color: AppColors.background,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(12.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(
+                                              Icons.work_outline,
+                                              color: AppColors.greyMedium,
+                                              size: 32,
+                                            ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              detailData!['rekap_pembelian']['jenis_jasa'] !=
+                                                      null
+                                                  ? 'Total Jenis Jasa'
+                                                  : 'Total Jenis Barang',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '${detailData!['rekap_pembelian']['jenis_jasa'] ?? detailData!['rekap_pembelian']['jenis_barang'] ?? '-'}',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Card(
+                                      color: AppColors.background,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(12.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(
+                                              Icons.account_balance_wallet,
+                                              color: AppColors.greyMedium,
+                                              size: 32,
+                                            ),
+                                            const SizedBox(height: 8),
+                                            const Text(
+                                              'Total Biaya',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '${detailData!['rekap_pembelian']['total_biaya'] ?? '-'}',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Card(
+                                      color: AppColors.background,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(12.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(
+                                              Icons.keyboard_return,
+                                              color: AppColors.greyMedium,
+                                              size: 32,
+                                            ),
+                                            const SizedBox(height: 8),
+                                            const Text(
+                                              'Kembali',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '${detailData!['rekap_pembelian']['kembali'] ?? '-'}',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Card(
+                                      color: AppColors.background,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(12.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            const Icon(
+                                              Icons.payment,
+                                              color: AppColors.greyMedium,
+                                              size: 32,
+                                            ),
+                                            const SizedBox(height: 8),
+                                            const Text(
+                                              'Metode Pembayaran',
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '${detailData!['rekap_pembelian']['metode_pembayaran'] ?? '-'}',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 8),
+                                            // Tambahan info jika metode transfer
+                                            if (detailData!['rekap_pembelian']['metode_pembayaran'] ==
+                                                'Transfer') ...[
+                                              const SizedBox(height: 4),
+                                              ...((detailData!['rekap_pembelian']['tujuan_transfer'] ??
+                                                      '-')
+                                                  .toString()
+                                                  .split(';')
+                                                  .map(
+                                                    (line) => Text(
+                                                      line.trim(),
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                  )
+                                                  .toList()),
+                                              if (detailData!['rekap_pembelian']['uang_kembali_transfer'] !=
+                                                  null) ...[
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  'Uang Kembali Transfer: ${detailData!['rekap_pembelian']['uang_kembali_transfer']}',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ],
+                                              if (detailData!['rekap_pembelian']['biaya_transfer'] !=
+                                                  null) ...[
+                                                const SizedBox(height: 2),
+                                                Text(
+                                                  'Biaya Transfer: ${detailData!['rekap_pembelian']['biaya_transfer']}',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ],
+                                              const SizedBox(height: 2),
+                                              Text(
+                                                'Berita Transfer: ${detailData!['rekap_pembelian']['berita_transfer'] ?? '-'}',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                            // Catatan pembelian darurat
+                                            if (detailData!['rekap_pembelian']['catatan'] !=
+                                                null) ...[
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                '${detailData!['rekap_pembelian']['catatan']}',
+                                                style: const TextStyle(
+                                                  fontSize: 12,
+                                                  color: AppColors.error,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ],
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+
+                      // Data Provider Upload
+                      if (detailData?['dataProviderUpload'] != null &&
+                          detailData!['dataProviderUpload'] is List &&
+                          detailData!['dataProviderUpload'].isNotEmpty &&
+                          detailData!['dataProviderUpload'][0]['tahap'] ==
+                              1) ...[
+                        Container(
+                          margin: const EdgeInsets.symmetric(vertical: 6.0),
+                          padding: const EdgeInsets.only(top: 10.0),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withAlpha(40),
+                            borderRadius: BorderRadius.circular(8),
+                            // border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0,
+                                ),
+                                child: const Text(
+                                  'Daftar Dokumen Pengajuan',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textblack,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                color: Colors.white,
+                                child: Table(
+                                  border: TableBorder(
+                                    top: BorderSide(
+                                      color: AppColors.black.withAlpha(80),
+                                      width: 1.2,
+                                    ),
+                                    bottom: BorderSide(
+                                      color: AppColors.black.withAlpha(80),
+                                      width: 1.2,
+                                    ),
+                                    left: BorderSide(
+                                      color: AppColors.black.withAlpha(80),
+                                      width: 1.2,
+                                    ),
+                                    right: BorderSide(
+                                      color: AppColors.black.withAlpha(80),
+                                      width: 1.2,
+                                    ),
+                                    horizontalInside: BorderSide(
+                                      color: AppColors.greyLight,
+                                      width: 0.8,
+                                    ),
+                                    verticalInside: BorderSide(
+                                      color: AppColors.greyLight,
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  columnWidths: const {
+                                    0: FlexColumnWidth(2),
+                                    1: FlexColumnWidth(3),
+                                    2: FlexColumnWidth(2),
+                                  },
+                                  children: [
+                                    TableRow(
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[200],
+                                      ),
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(
+                                            'Nama File',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(
+                                            'Keterangan',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(
+                                            'Aksi',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    ...detailData!['dataProviderUpload'].map<
+                                      TableRow
+                                    >((up) {
+                                      return TableRow(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                        ),
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Text(
+                                              // Ambil nama file di belakang dan ubah %20 jadi spasi
+                                              (() {
+                                                final fullPath =
+                                                    up['nama_file'] ?? '-';
+                                                if (fullPath == '-' ||
+                                                    fullPath == null) {
+                                                  return '-';
+                                                }
+                                                final fileName = fullPath
+                                                    .split('/')
+                                                    .last
+                                                    .replaceAll('%20', ' ');
+                                                return fileName;
+                                              })(),
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  '${up['keterangan'] ?? '-'}',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  'Upload oleh: ${up['upload_by'] ?? '-'}',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  '${up['created_at'] ?? '-'}',
+                                                  style: const TextStyle(
+                                                    fontStyle: FontStyle.italic,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          Column(
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () {
+                                                  final fileName =
+                                                      up['nama_file']
+                                                          ?.toString() ??
+                                                      '';
+                                                  print(
+                                                    '${GlobalVariables.imageUrl}$fileName',
+                                                  );
+                                                  if (fileName
+                                                      .toLowerCase()
+                                                      .endsWith('.pdf')) {
+                                                    pdfViewer(
+                                                      context,
+                                                      '${GlobalVariables.imageUrl}$fileName',
+                                                    );
+                                                  } else {
+                                                    imageViewer(
+                                                      context,
+                                                      '${GlobalVariables.imageUrl}$fileName',
+                                                    );
+                                                  }
+                                                },
+                                                child: Container(
+                                                  height: 48,
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors.primary
+                                                        .withAlpha(50),
+                                                  ),
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                          8.0,
+                                                        ),
+                                                    child: Row(
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.visibility,
+                                                          size: 16,
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 4,
+                                                        ),
+                                                        const Text(
+                                                          'View',
+                                                          style: TextStyle(
+                                                            fontSize: 12,
+                                                            color: AppColors
+                                                                .primary,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              Container(
+                                                height: 2,
+                                                color: AppColors.greyLight,
+                                              ),
+                                              GestureDetector(
+                                                onTap: () {
+                                                  downloadFile(
+                                                    '${GlobalVariables.imageUrl}${up['nama_file'] ?? ''}',
+                                                  );
+                                                },
+                                                child: Container(
+                                                  height: 48,
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors.primary
+                                                        .withAlpha(50),
+                                                  ),
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                          8.0,
+                                                        ),
+                                                    child: Row(
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.download,
+                                                          size: 16,
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 4,
+                                                        ),
+                                                        const Text(
+                                                          'Download',
+                                                          style: TextStyle(
+                                                            fontSize: 8,
+                                                            color: AppColors
+                                                                .primary,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              Container(
+                                                height: 2,
+                                                color: AppColors.greyLight,
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      );
+                                    }).toList(),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ] else ...[
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.all(16.0),
+                          child: Center(
+                            child: Text(
+                              'Tidak Ada Hasil Daftar Dokumen Pengajuan',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppColors.error,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      // Data Provider Bayar Upload
+                      if (detailData?['dataProviderBayarUpload'] != null &&
+                          detailData!['dataProviderBayarUpload'] is List &&
+                          detailData!['dataProviderBayarUpload'].isNotEmpty &&
+                          detailData!['dataProviderBayarUpload'][0]['tahap'] ==
+                              2) ...[
+                        Container(
+                          margin: const EdgeInsets.symmetric(vertical: 6.0),
+                          padding: const EdgeInsets.only(top: 10.0),
+                          decoration: BoxDecoration(
+                            color: AppColors.orange.withAlpha(60),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8.0,
+                                ),
+                                child: const Text(
+                                  'Daftar Dokumen Pertanggung Jawaban',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.textblack,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 6),
+                              Container(
+                                color: Colors.white,
+                                child: Table(
+                                  border: TableBorder(
+                                    top: BorderSide(
+                                      color: AppColors.black.withAlpha(80),
+                                      width: 1.2,
+                                    ),
+                                    bottom: BorderSide(
+                                      color: AppColors.black.withAlpha(80),
+                                      width: 1.2,
+                                    ),
+                                    left: BorderSide(
+                                      color: AppColors.black.withAlpha(80),
+                                      width: 1.2,
+                                    ),
+                                    right: BorderSide(
+                                      color: AppColors.black.withAlpha(80),
+                                      width: 1.2,
+                                    ),
+                                    horizontalInside: BorderSide(
+                                      color: AppColors.greyLight,
+                                      width: 0.8,
+                                    ),
+                                    verticalInside: BorderSide(
+                                      color: AppColors.greyLight,
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  columnWidths: const {
+                                    0: FlexColumnWidth(2),
+                                    1: FlexColumnWidth(3),
+                                    2: FlexColumnWidth(2),
+                                  },
+                                  children: [
+                                    TableRow(
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey[200],
+                                      ),
+                                      children: [
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(
+                                            'Nama File',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(
+                                            'Keterangan',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        Padding(
+                                          padding: const EdgeInsets.all(8.0),
+                                          child: Text(
+                                            'Aksi',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    ...detailData!['dataProviderBayarUpload'].map<
+                                      TableRow
+                                    >((up) {
+                                      return TableRow(
+                                        decoration: BoxDecoration(
+                                          color: Colors.white,
+                                        ),
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Text(
+                                              // Ambil nama file di belakang dan ubah %20 jadi spasi
+                                              (() {
+                                                final fullPath =
+                                                    up['nama_file'] ?? '-';
+                                                if (fullPath == '-' ||
+                                                    fullPath == null) {
+                                                  return '-';
+                                                }
+                                                final fileName = fullPath
+                                                    .split('/')
+                                                    .last
+                                                    .replaceAll('%20', ' ');
+                                                return fileName;
+                                              })(),
+                                            ),
+                                          ),
+                                          Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  '${up['keterangan'] ?? '-'}',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                if (up['upload_by'] != null)
+                                                  Text(
+                                                    'Upload oleh: ${up['upload_by']}',
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                    ),
+                                                  ),
+                                                if (up['created_at'] != null)
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                          top: 4,
+                                                        ),
+                                                    child: Text(
+                                                      '${up['created_at']}',
+                                                      style: const TextStyle(
+                                                        fontStyle:
+                                                            FontStyle.italic,
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ),
+                                          Column(
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () {
+                                                  final fileName =
+                                                      up['nama_file']
+                                                          ?.toString() ??
+                                                      '';
+                                                  print(
+                                                    '${GlobalVariables.imageUrl}$fileName',
+                                                  );
+                                                  if (fileName
+                                                      .toLowerCase()
+                                                      .endsWith('.pdf')) {
+                                                    pdfViewer(
+                                                      context,
+                                                      '${GlobalVariables.imageUrl}$fileName',
+                                                    );
+                                                  } else {
+                                                    imageViewer(
+                                                      context,
+                                                      '${GlobalVariables.imageUrl}$fileName',
+                                                    );
+                                                  }
+                                                },
+                                                child: Container(
+                                                  height: 48,
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors.orange
+                                                        .withAlpha(50),
+                                                  ),
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                          8.0,
+                                                        ),
+                                                    child: Row(
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.visibility,
+                                                          size: 16,
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 4,
+                                                        ),
+                                                        const Text(
+                                                          'View',
+                                                          style: TextStyle(
+                                                            fontSize: 12,
+                                                            color: AppColors
+                                                                .orange,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              Container(
+                                                height: 2,
+                                                color: AppColors.greyLight,
+                                              ),
+                                              GestureDetector(
+                                                onTap: () {
+                                                  downloadFile(
+                                                    '${GlobalVariables.imageUrl}${up['nama_file'] ?? ''}',
+                                                  );
+                                                },
+                                                child: Container(
+                                                  height: 48,
+                                                  decoration: BoxDecoration(
+                                                    color: AppColors.orange
+                                                        .withAlpha(50),
+                                                  ),
+                                                  child: Padding(
+                                                    padding:
+                                                        const EdgeInsets.all(
+                                                          8.0,
+                                                        ),
+                                                    child: Row(
+                                                      children: [
+                                                        const Icon(
+                                                          Icons.download,
+                                                          size: 16,
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 4,
+                                                        ),
+                                                        const Text(
+                                                          'Download',
+                                                          style: TextStyle(
+                                                            fontSize: 8,
+                                                            color: AppColors
+                                                                .orange,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                              Container(
+                                                height: 2,
+                                                color: AppColors.greyLight,
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      );
+                                    }).toList(),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ] else ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: const EdgeInsets.all(16.0),
+                          child: Center(
+                            child: Text(
+                              'Tidak Ada Hasil Daftar Dokumen Pertanggung Jawaban',
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: AppColors.error,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      // Model Status
+                      if (detailData?['model_status'] != null &&
+                          detailData!['model_status'] is List &&
+                          detailData!['model_status'].isNotEmpty) ...[
+                        Container(
+                          margin: const EdgeInsets.symmetric(vertical: 6.0),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: 10.0,
+                            horizontal: 12.0,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[100],
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: Colors.grey[300]!),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ...detailData!['model_status'].map<Widget>(
+                                (st) => Container(
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    border: Border.all(
+                                      color: AppColors.greyLight,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        width: 48,
+                                        height: (() {
+                                          final status =
+                                              st['status']?.toString() ?? '';
+                                          final keterangan =
+                                              st['keterangan']?.toString() ??
+                                              '';
+                                          if (status.length <= 50 &&
+                                              keterangan.length <= 50) {
+                                            return 108.0;
+                                          } else if (status.length > 50 ||
+                                              keterangan.length > 50) {
+                                            return 148.0;
+                                          } else if (keterangan.length > 100) {
+                                            return 172.0;
+                                          } else {
+                                            return 108.0;
+                                          }
+                                        })(),
+                                        decoration: BoxDecoration(
+                                          color:
+                                              st['kode_status'] == 99 ||
+                                                  st['kode_status'] == 89 ||
+                                                  st['kode_status'] == 79
+                                              ? AppColors.error
+                                              : st['kode_status'] == 500
+                                              ? AppColors.greyMedium
+                                              : AppColors.success,
+                                        ),
+                                        child: Icon(
+                                          st['kode_status'] == 99 ||
+                                                  st['kode_status'] == 89 ||
+                                                  st['kode_status'] == 79
+                                              ? Icons.close
+                                              : st['kode_status'] == 500
+                                              ? Icons.access_time
+                                              : Icons.check,
+                                          color: Colors.white,
+                                          size: 28,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            vertical: 4.0,
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                '${st['status'] ?? '-'}',
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16,
+                                                ),
+                                              ),
+                                              Row(
+                                                children: [
+                                                  const Icon(
+                                                    Icons.access_time,
+                                                    size: 14,
+                                                    color: Colors.grey,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    '${st['tanggal_status'] ?? '-'}',
+                                                    style: const TextStyle(
+                                                      fontSize: 12,
+                                                      fontStyle:
+                                                          FontStyle.italic,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Text(
+                                                '${st['keterangan'] ?? '-'}',
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+        ],
+      ),
+      // floatingActionButton: FloatingActionButton.extended(
+      //   onPressed: () {
+      //     Navigator.push(
+      //       context,
+      //       MaterialPageRoute(
+      //         builder: (context) => SetujuiTransaksiPembelianScreen(
+      //           pembelianId: widget.pembelianId,
+      //           userId: widget.userId,
+      //           barang_jasa: detailData!['model_pembelian']['barang_jasa'],
+      //           no_ppb: detailData!['model_pembelian']['no_ppb'],
+      //           tgl_pengajuan: detailData!['model_pembelian']['tgl_pengajuan'],
+      //           level: detailData!['level'],
+      //           divisi: detailData!['model_pembelian']['nama_divisi'],
+      //           keterangan:
+      //               (detailData!['model_pembelian']['keterangan']
+      //                       ?.toString()
+      //                       .toLowerCase() ==
+      //                   'keterangan')
+      //               ? '-'
+      //               : '${detailData!['model_pembelian']['keterangan'] ?? '-'}',
+      //           total_biaya:
+      //               '${detailData!['rekap_pembelian']['total_biaya'] ?? '-'}',
+      //         ),
+      //       ),
+      //     );
+      //   },
+      //   icon: const Icon(Icons.arrow_forward, color: Colors.white),
+      //   label: const Text(
+      //     'Persetujuan',
+      //     style: TextStyle(color: Colors.white, fontSize: 12),
+      //   ),
+      //   backgroundColor: AppColors.success,
+      // ),
+    );
+  }
+}

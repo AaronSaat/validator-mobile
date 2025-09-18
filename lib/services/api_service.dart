@@ -185,7 +185,103 @@ class ApiService {
       throw Exception('Failed to fetch transaksi gantung');
     }
   }
-  
+
+  static Future<Map<String, dynamic>> konfirmasiBarangtiba({
+    required int userId,
+    String search = '',
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('${baseurl}konfirmasi-barang-tiba');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({'user_id': userId, 'search': search}),
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to fetch konfirmasi barang tiba');
+    }
+  }
+
+  static Future<Map<String, dynamic>> arsipTransaksiKembali({
+    required int userId,
+    required String username,
+    String search = '',
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('${baseurl}arsip-transaksi-kembali');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({'user_id': userId, 'username': username, 'search': search}),
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to fetch arsip transaksi kembali');
+    }
+  }
+
+  static Future<Map<String, dynamic>> arsipTransaksi({
+    required int userId,
+    String jenis = '',
+    String tgl_pengajuan = '',
+    String tgl_pengajuan_akhir = '',
+    String search = '',
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('${baseurl}arsip-transaksi');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({'user_id': userId, 'jenis': jenis, 'tgl_pengajuan': tgl_pengajuan, 'tgl_pengajuan_akhir': tgl_pengajuan_akhir, 'search': search}),
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to fetch arsip transaksi  ');
+    }
+  }
+
+  static Future<Map<String, dynamic>> pembayaranView({
+    required String idBayar,
+    required String userId,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('${baseurl}pembayaran-view');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({'id_bayar': idBayar, 'user_id': userId}),
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to fetch pembayaran view');
+    }
+  }
+
   // static Future<bool> validateToken(
   //   BuildContext context, {
   //   required String token,

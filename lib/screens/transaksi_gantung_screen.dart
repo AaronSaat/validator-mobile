@@ -327,6 +327,42 @@ class _TransaksiGantungScreenState extends State<TransaksiGantungScreen> {
                       ),
                     ),
                   ),
+                  Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16.0,
+                          vertical: 8.0,
+                        ),
+                        child: Container(
+                          width: double.infinity,
+                          decoration: BoxDecoration(color: AppColors.primary),
+                          child: Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Row(
+                              children: [
+                                // Icon dan text di ujung kiri
+                                const Icon(
+                                  Icons.list_alt,
+                                  color: AppColors.textwhite,
+                                ),
+                                const SizedBox(width: 8),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Showing ${transaksiGantungList.length} items',
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.normal,
+                                        fontSize: 12,
+                                        color: AppColors.textwhite,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                   Expanded(
                     child: ListView.builder(
                       itemCount: transaksiGantungList.length,
@@ -474,12 +510,12 @@ class _TransaksiGantungScreenState extends State<TransaksiGantungScreen> {
                                           Text(
                                             // ignore: prefer_interpolation_to_compose_strings
                                             'Keperluan: ' +
-                                                ((item['keterangan']
+                                                ((item['keperluan']
                                                             ?.toString()
                                                             .toLowerCase() ==
-                                                        'keterangan')
+                                                        'keperluan')
                                                     ? '-'
-                                                    : (item['keterangan'] ??
+                                                    : (item['keperluan'] ??
                                                           '-')),
                                             style: const TextStyle(
                                               fontSize: 12,
