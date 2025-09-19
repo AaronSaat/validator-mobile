@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:validator/screens/dashboard_screen.dart';
+import 'package:validator/screens/detail_transaksi_gantung_screen.dart';
 import 'package:validator/screens/login_screen.dart';
 import 'package:validator/screens/searching_screen.dart';
 import 'package:validator/services/api_service.dart';
@@ -328,60 +329,63 @@ class _TransaksiGantungScreenState extends State<TransaksiGantungScreen> {
                     ),
                   ),
                   Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 8.0,
-                        ),
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(color: AppColors.primary),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(color: AppColors.primary),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          children: [
+                            // Icon dan text di ujung kiri
+                            const Icon(
+                              Icons.list_alt,
+                              color: AppColors.textwhite,
+                            ),
+                            const SizedBox(width: 8),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                // Icon dan text di ujung kiri
-                                const Icon(
-                                  Icons.list_alt,
-                                  color: AppColors.textwhite,
-                                ),
-                                const SizedBox(width: 8),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Showing ${transaksiGantungList.length} items',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.normal,
-                                        fontSize: 12,
-                                        color: AppColors.textwhite,
-                                      ),
-                                    ),
-                                  ],
+                                Text(
+                                  'Showing ${transaksiGantungList.length} items',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.normal,
+                                    fontSize: 12,
+                                    color: AppColors.textwhite,
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
+                          ],
                         ),
                       ),
+                    ),
+                  ),
                   Expanded(
                     child: ListView.builder(
                       itemCount: transaksiGantungList.length,
                       itemBuilder: (context, index) {
                         final item = transaksiGantungList[index];
+                        print(item['id_bayar']);
+                        print(item['id_bayar'].runtimeType);
                         return GestureDetector(
                           onTap: () async {
-                            // final result = await Navigator.of(context).push(
-                            //   MaterialPageRoute(
-                            //     builder: (context) => DetailTransaksiGantungScreen(
-                            //       pembelianId: item['id_pembelian'],
-                            //       userId: userId,
-                            //     ),
-                            //   ),
-                            // );
-                            // // Jika kembali dari detail dan result == true, refresh data
-                            // if (result == 'reload') {
-                            //   _fetchTransaksiGantung();
-                            // }
+                            final result = await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    DetailTransaksiGantungScreen(
+                                      bayarId: item['id_bayar'],
+                                      userId: userId,
+                                    ),
+                              ),
+                            );
+                            // Jika kembali dari detail dan result == true, refresh data
+                            if (result == 'reload') {
+                              _fetchTransaksiGantung();
+                            }
                           },
                           child: SizedBox(
                             width: MediaQuery.of(context).size.width,

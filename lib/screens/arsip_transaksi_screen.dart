@@ -6,7 +6,6 @@ import 'package:validator/screens/searching_screen.dart';
 import 'package:validator/services/api_service.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:validator/utils/appstatus.dart';
-import 'package:validator/utils/date_formatter.dart';
 import '../utils/appcolors.dart';
 
 class ArsipTransaksiScreen extends StatefulWidget {

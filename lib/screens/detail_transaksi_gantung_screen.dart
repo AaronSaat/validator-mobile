@@ -3,6 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:validator/screens/setujui_transaksi_pembelian_screen.dart';
 import 'package:validator/utils/appcolors.dart';
+import 'package:validator/utils/appstatus.dart';
 import 'package:validator/utils/globalvariables.dart';
 import '../services/api_service.dart';
 import 'package:photo_view/photo_view.dart';
@@ -14,20 +15,22 @@ import 'package:flutter_file_downloader/flutter_file_downloader.dart';
 import 'package:open_file/open_file.dart';
 
 class DetailTransaksiGantungScreen extends StatefulWidget {
-  final int idBayar;
+  final int bayarId;
   final int userId;
 
   const DetailTransaksiGantungScreen({
     Key? key,
-    required this.idBayar,
+    required this.bayarId,
     required this.userId,
   }) : super(key: key);
 
   @override
-  State<DetailTransaksiGantungScreen> createState() => _DetailTransaksiGantungScreenState();
+  State<DetailTransaksiGantungScreen> createState() =>
+      _DetailTransaksiGantungScreenState();
 }
 
-class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScreen> {
+class _DetailTransaksiGantungScreenState
+    extends State<DetailTransaksiGantungScreen> {
   Map<String, dynamic>? detailData;
   bool isLoading = true;
   String? errorMsg;
@@ -44,8 +47,8 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
       errorMsg = null;
     });
     try {
-      final result = await ApiService.pembayaranView(
-        idBayar: widget.idBayar.toString(),
+      final result = await ApiService.pembayaranViewValidator(
+        idBayar: widget.bayarId.toString(),
         userId: widget.userId.toString(),
       );
       setState(() {
@@ -291,7 +294,6 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-
                       // Model Pembelian
                       // Judul Pengadaan Jasa Luar
                       Text(
@@ -307,7 +309,7 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                       if (detailData?['model_pembelian'] != null) ...[
                         Container(
                           margin: const EdgeInsets.symmetric(vertical: 6.0),
-                          decoration: BoxDecoration(  
+                          decoration: BoxDecoration(
                             border: Border.all(
                               color: AppColors.greyLight,
                               width: 1.2,
@@ -478,14 +480,9 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                                   ),
                                   Container(
                                     decoration: BoxDecoration(
-                                      color:
-                                          detailData!['model_pembelian']['status'] ==
-                                              1
-                                          ? AppColors.lightblue
-                                          : detailData!['model_pembelian']['status'] ==
-                                                101
-                                          ? AppColors.orange
-                                          : Colors.grey[300],
+                                      color: AppStatus.getStatusColor(
+                                        detailData!['model_pembelian']['status'],
+                                      ),
                                     ),
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 12,
@@ -509,11 +506,9 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                       ],
 
                       // Data Provider - Daftar Jasa Luar
-                      if (detailData?['dataProvider'] != null &&
-                          detailData!['dataProvider'] is List &&
-                          detailData!['dataProvider'].isNotEmpty &&
-                          detailData!['dataProvider'][0]['id_jasaluar_detail'] !=
-                              null) ...[
+                      if (detailData?['model_bayar_detail'] != null &&
+                          detailData!['model_bayar_detail'] is Map &&
+                          detailData!['model_bayar_detail'].isNotEmpty) ...[
                         Container(
                           width: double.infinity,
                           margin: const EdgeInsets.symmetric(vertical: 6.0),
@@ -550,7 +545,9 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                                 },
                                 children: [
                                   for (var entry
-                                      in detailData!['dataProvider']
+                                      in detailData!['model_bayar_detail']
+                                          .entries
+                                          .toList()
                                           .asMap()
                                           .entries)
                                     TableRow(
@@ -579,7 +576,7 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                                                 CrossAxisAlignment.start,
                                             children: [
                                               Text(
-                                                '${entry.value['jenis_pekerjaan'] ?? '-'}',
+                                                '${entry.value.value['jenis_pekerjaan'] ?? '-'}',
                                                 style: const TextStyle(
                                                   fontSize: 18,
                                                   fontWeight: FontWeight.bold,
@@ -595,7 +592,7 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                                                   ),
                                                   const SizedBox(width: 4),
                                                   Text(
-                                                    'Supplier Jasa: ${entry.value['supplier_jasa'] ?? '-'}',
+                                                    'Supplier Jasa: ${entry.value.value['supplier_jasa'] ?? '-'}',
                                                     style: const TextStyle(
                                                       fontSize: 14,
                                                     ),
@@ -612,7 +609,7 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                                                   ),
                                                   const SizedBox(width: 4),
                                                   Text(
-                                                    'Tanggal Diselesaikan: ${entry.value['tgl_diselesaikan'] ?? '-'}',
+                                                    'Tanggal Diselesaikan: ${entry.value.value['tgl_diselesaikan'] ?? '(not set)'}',
                                                     style: const TextStyle(
                                                       fontSize: 14,
                                                     ),
@@ -630,7 +627,7 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                                                   const SizedBox(width: 4),
                                                   Expanded(
                                                     child: Text(
-                                                      'Keterangan Item: ${(entry.value['keterangan_item']?.toString().toLowerCase() == 'keterangan item') ? '-' : '${entry.value['keterangan_item'] ?? '-'}'}',
+                                                      'Keterangan Item: ${(entry.value.value['keterangan_item']?.toString().toLowerCase() == 'keterangan item') ? '-' : '${entry.value.value['keterangan_item'] ?? '-'}'}',
                                                       style: const TextStyle(
                                                         fontSize: 14,
                                                       ),
@@ -641,34 +638,34 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                                                   ),
                                                 ],
                                               ),
-
-                                              // Container(
-                                              //   margin:
-                                              //       const EdgeInsets.symmetric(
-                                              //         vertical: 4,
-                                              //       ),
-                                              //   padding:
-                                              //       const EdgeInsets.symmetric(
-                                              //         vertical: 6,
-                                              //         horizontal: 10,
-                                              //       ),
-                                              //   decoration: BoxDecoration(
-                                              //     color: AppColors.lightblue
-                                              //         .withAlpha(50),
-                                              //     borderRadius:
-                                              //         BorderRadius.circular(8),
-                                              //     border: Border.all(
-                                              //       color: AppColors.secondary,
-                                              //     ),
-                                              //   ),
-                                              //   child: Text(
-                                              //     'Estimasi Biaya: ${entry.value['estimasi_biaya'] ?? '-'}',
-                                              //     style: const TextStyle(
-                                              //       fontWeight: FontWeight.w500,
-                                              //       fontSize: 12,
-                                              //     ),
-                                              //   ),
-                                              // ),
+                                              // Estimasi Biaya
+                                              Container(
+                                                margin:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 4,
+                                                    ),
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 6,
+                                                      horizontal: 10,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: AppColors.lightblue
+                                                      .withAlpha(50),
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                  border: Border.all(
+                                                    color: AppColors.secondary,
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  'Estimasi Biaya: ${entry.value.value['estimasi_biaya'] ?? '-'}',
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w500,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                              ),
                                             ],
                                           ),
                                         ),
@@ -679,333 +676,352 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                             ],
                           ),
                         ),
-                      ],
-                      // Data Provider - Daftar Jasa Luar
-                      if (detailData?['dataProvider'] != null &&
-                          detailData!['dataProvider'] is List &&
-                          detailData!['dataProvider'].isNotEmpty &&
-                          detailData!['dataProvider'][0]['id_pembelian_detail'] !=
-                              null) ...[
+                      ] else ...[
                         Container(
                           width: double.infinity,
-                          margin: const EdgeInsets.symmetric(vertical: 6.0),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10.0,
-                            horizontal: 12.0,
-                          ),
                           decoration: BoxDecoration(
-                            color: Colors.grey[100],
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey[300]!),
                           ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Daftar Barang Detail',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
+                          padding: const EdgeInsets.all(16.0),
+                          child: Center(
+                            child: Text(
+                              'Tidak ada data Jasa Luar',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: AppColors.error,
+                                fontWeight: FontWeight.bold,
                               ),
-                              const SizedBox(height: 8),
-                              Table(
-                                border: TableBorder.symmetric(
-                                  inside: BorderSide(
-                                    color: AppColors.greyLight,
-                                    width: 1.2,
-                                  ),
-                                ),
-                                columnWidths: const {
-                                  0: FlexColumnWidth(0.5),
-                                  1: FlexColumnWidth(3.5),
-                                },
-                                children: [
-                                  for (var entry
-                                      in detailData!['dataProvider']
-                                          .asMap()
-                                          .entries)
-                                    (() {
-                                      final jumlah =
-                                          int.tryParse(
-                                            entry.value['jumlah'].toString(),
-                                          ) ??
-                                          0;
-                                      final estimasiHargaSatuan =
-                                          int.tryParse(
-                                            (entry.value['estimasi_harga_satuan']
-                                                    ?.toString()
-                                                    .replaceAll('.00', '')) ??
-                                                '0',
-                                          ) ??
-                                          0;
-                                      final total =
-                                          (jumlah > 0 &&
-                                              estimasiHargaSatuan > 0)
-                                          ? (jumlah * estimasiHargaSatuan)
-                                                .toString()
-                                          : '-.00';
-                                      // Format total dengan koma dan tambahkan ".00"
-                                      final totalEstimasi = total != '-.00'
-                                          ? '${(jumlah * estimasiHargaSatuan).toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (match) => '${match.group(1)},')}.00'
-                                          : '-.00';
-
-                                      final estimasiHargaSatuanFormatted =
-                                          (entry.value['estimasi_harga_satuan'] !=
-                                                  null &&
-                                              entry
-                                                  .value['estimasi_harga_satuan']
-                                                  .toString()
-                                                  .isNotEmpty &&
-                                              entry.value['estimasi_harga_satuan']
-                                                      .toString() !=
-                                                  '0')
-                                          ? '${entry.value['estimasi_harga_satuan'].toString().replaceAll('.00', '').replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (match) => '${match.group(1)},')}.00'
-                                          : '-';
-                                      return TableRow(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 8,
-                                              horizontal: 8,
-                                            ),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              '${entry.key + 1}',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 18,
-                                              ),
-                                            ),
-                                          ),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 8,
-                                              horizontal: 8,
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  '${entry.value['nama_barang'] ?? '-'}',
-                                                  style: const TextStyle(
-                                                    fontSize: 18,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 8),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.local_offer,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      'Merk: ${entry.value['merk'] ?? '-'}',
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.confirmation_number,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      'Jumlah: ${entry.value['jumlah'] ?? '-'}',
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.straighten,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      'Satuan: ${entry.value['satuan'] ?? '-'}',
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.attach_money,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      'Estimasi Harga Satuan:',
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    const SizedBox(width: 22),
-                                                    Text(
-                                                      '${estimasiHargaSatuanFormatted}',
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.calculate,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      'Total Estimasi:',
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    const SizedBox(width: 22),
-                                                    Text(
-                                                      '$totalEstimasi',
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.calendar_today,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      'Tanggal Dibutuhkan: ${entry.value['tgl_dibutuhkan'] ?? '-'}',
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.assignment,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Expanded(
-                                                      child: Text(
-                                                        'Keperluan: ${(entry.value['keperluan']?.toString().toLowerCase() == 'keperluan') ? '-' : '${entry.value['keperluan'] ?? '-'}'}',
-                                                        style: const TextStyle(
-                                                          fontSize: 14,
-                                                        ),
-                                                        maxLines: 3,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.location_on,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Expanded(
-                                                      child: Text(
-                                                        'Lokasi Penggunaan: ${(entry.value['lokasi']?.toString().toLowerCase() == 'lokasi') ? '-' : '${entry.value['lokasi'] ?? '-'}'}',
-                                                        style: const TextStyle(
-                                                          fontSize: 14,
-                                                        ),
-                                                        maxLines: 3,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.info_outline,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Expanded(
-                                                      child: Text(
-                                                        'Keterangan Item: ${(entry.value['keterangan_item']?.toString().toLowerCase() == 'keterangan item') ? '-' : '${entry.value['keterangan_item'] ?? '-'}'}',
-                                                        style: const TextStyle(
-                                                          fontSize: 14,
-                                                        ),
-                                                        maxLines: 3,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                                    })(),
-                                ],
-                              ),
-                            ],
+                            ),
                           ),
                         ),
                       ],
+                      // // Data Provider - Daftar Jasa Luar
+                      // if (detailData?['dataProvider'] != null &&
+                      //     detailData!['dataProvider'] is List &&
+                      //     detailData!['dataProvider'].isNotEmpty &&
+                      //     detailData!['dataProvider'][0]['id_pembelian_detail'] !=
+                      //         null) ...[
+                      //   Container(
+                      //     width: double.infinity,
+                      //     margin: const EdgeInsets.symmetric(vertical: 6.0),
+                      //     padding: const EdgeInsets.symmetric(
+                      //       vertical: 10.0,
+                      //       horizontal: 12.0,
+                      //     ),
+                      //     decoration: BoxDecoration(
+                      //       color: Colors.grey[100],
+                      //       borderRadius: BorderRadius.circular(8),
+                      //       border: Border.all(color: Colors.grey[300]!),
+                      //     ),
+                      //     child: Column(
+                      //       crossAxisAlignment: CrossAxisAlignment.start,
+                      //       children: [
+                      //         Text(
+                      //           'Daftar Barang Detail',
+                      //           style: const TextStyle(
+                      //             fontWeight: FontWeight.bold,
+                      //             fontSize: 16,
+                      //           ),
+                      //         ),
+                      //         const SizedBox(height: 8),
+                      //         Table(
+                      //           border: TableBorder.symmetric(
+                      //             inside: BorderSide(
+                      //               color: AppColors.greyLight,
+                      //               width: 1.2,
+                      //             ),
+                      //           ),
+                      //           columnWidths: const {
+                      //             0: FlexColumnWidth(0.5),
+                      //             1: FlexColumnWidth(3.5),
+                      //           },
+                      //           children: [
+                      //             for (var entry
+                      //                 in detailData!['dataProvider']
+                      //                     .asMap()
+                      //                     .entries)
+                      //               (() {
+                      //                 final jumlah =
+                      //                     int.tryParse(
+                      //                       entry.value['jumlah'].toString(),
+                      //                     ) ??
+                      //                     0;
+                      //                 final estimasiHargaSatuan =
+                      //                     int.tryParse(
+                      //                       (entry.value['estimasi_harga_satuan']
+                      //                               ?.toString()
+                      //                               .replaceAll('.00', '')) ??
+                      //                           '0',
+                      //                     ) ??
+                      //                     0;
+                      //                 final total =
+                      //                     (jumlah > 0 &&
+                      //                         estimasiHargaSatuan > 0)
+                      //                     ? (jumlah * estimasiHargaSatuan)
+                      //                           .toString()
+                      //                     : '-.00';
+                      //                 // Format total dengan koma dan tambahkan ".00"
+                      //                 final totalEstimasi = total != '-.00'
+                      //                     ? '${(jumlah * estimasiHargaSatuan).toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (match) => '${match.group(1)},')}.00'
+                      //                     : '-.00';
+
+                      //                 final estimasiHargaSatuanFormatted =
+                      //                     (entry.value['estimasi_harga_satuan'] !=
+                      //                             null &&
+                      //                         entry
+                      //                             .value['estimasi_harga_satuan']
+                      //                             .toString()
+                      //                             .isNotEmpty &&
+                      //                         entry.value['estimasi_harga_satuan']
+                      //                                 .toString() !=
+                      //                             '0')
+                      //                     ? '${entry.value['estimasi_harga_satuan'].toString().replaceAll('.00', '').replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (match) => '${match.group(1)},')}.00'
+                      //                     : '-';
+                      //                 return TableRow(
+                      //                   children: [
+                      //                     Container(
+                      //                       padding: const EdgeInsets.symmetric(
+                      //                         vertical: 8,
+                      //                         horizontal: 8,
+                      //                       ),
+                      //                       alignment: Alignment.center,
+                      //                       child: Text(
+                      //                         '${entry.key + 1}',
+                      //                         style: const TextStyle(
+                      //                           fontWeight: FontWeight.bold,
+                      //                           fontSize: 18,
+                      //                         ),
+                      //                       ),
+                      //                     ),
+                      //                     Container(
+                      //                       padding: const EdgeInsets.symmetric(
+                      //                         vertical: 8,
+                      //                         horizontal: 8,
+                      //                       ),
+                      //                       child: Column(
+                      //                         crossAxisAlignment:
+                      //                             CrossAxisAlignment.start,
+                      //                         children: [
+                      //                           Text(
+                      //                             '${entry.value['nama_barang'] ?? '-'}',
+                      //                             style: const TextStyle(
+                      //                               fontSize: 18,
+                      //                               fontWeight: FontWeight.bold,
+                      //                             ),
+                      //                           ),
+                      //                           const SizedBox(height: 8),
+                      //                           Row(
+                      //                             children: [
+                      //                               const Icon(
+                      //                                 Icons.local_offer,
+                      //                                 size: 18,
+                      //                                 color:
+                      //                                     AppColors.greyMedium,
+                      //                               ),
+                      //                               const SizedBox(width: 4),
+                      //                               Text(
+                      //                                 'Merk: ${entry.value['merk'] ?? '-'}',
+                      //                                 style: const TextStyle(
+                      //                                   fontSize: 14,
+                      //                                 ),
+                      //                               ),
+                      //                             ],
+                      //                           ),
+                      //                           const SizedBox(width: 4),
+                      //                           Row(
+                      //                             children: [
+                      //                               const Icon(
+                      //                                 Icons.confirmation_number,
+                      //                                 size: 18,
+                      //                                 color:
+                      //                                     AppColors.greyMedium,
+                      //                               ),
+                      //                               const SizedBox(width: 4),
+                      //                               Text(
+                      //                                 'Jumlah: ${entry.value['jumlah'] ?? '-'}',
+                      //                                 style: const TextStyle(
+                      //                                   fontSize: 14,
+                      //                                 ),
+                      //                               ),
+                      //                             ],
+                      //                           ),
+                      //                           const SizedBox(height: 4),
+                      //                           Row(
+                      //                             children: [
+                      //                               const Icon(
+                      //                                 Icons.straighten,
+                      //                                 size: 18,
+                      //                                 color:
+                      //                                     AppColors.greyMedium,
+                      //                               ),
+                      //                               const SizedBox(width: 4),
+                      //                               Text(
+                      //                                 'Satuan: ${entry.value['satuan'] ?? '-'}',
+                      //                                 style: const TextStyle(
+                      //                                   fontSize: 14,
+                      //                                 ),
+                      //                               ),
+                      //                             ],
+                      //                           ),
+                      //                           const SizedBox(height: 4),
+                      //                           Row(
+                      //                             children: [
+                      //                               const Icon(
+                      //                                 Icons.attach_money,
+                      //                                 size: 18,
+                      //                                 color:
+                      //                                     AppColors.greyMedium,
+                      //                               ),
+                      //                               const SizedBox(width: 4),
+                      //                               Text(
+                      //                                 'Estimasi Harga Satuan:',
+                      //                                 style: const TextStyle(
+                      //                                   fontSize: 14,
+                      //                                 ),
+                      //                               ),
+                      //                             ],
+                      //                           ),
+                      //                           Row(
+                      //                             children: [
+                      //                               const SizedBox(width: 22),
+                      //                               Text(
+                      //                                 '${estimasiHargaSatuanFormatted}',
+                      //                                 style: const TextStyle(
+                      //                                   fontSize: 14,
+                      //                                 ),
+                      //                               ),
+                      //                             ],
+                      //                           ),
+                      //                           Row(
+                      //                             children: [
+                      //                               const Icon(
+                      //                                 Icons.calculate,
+                      //                                 size: 18,
+                      //                                 color:
+                      //                                     AppColors.greyMedium,
+                      //                               ),
+                      //                               const SizedBox(width: 4),
+                      //                               Text(
+                      //                                 'Total Estimasi:',
+                      //                                 style: TextStyle(
+                      //                                   fontSize: 14,
+                      //                                 ),
+                      //                               ),
+                      //                             ],
+                      //                           ),
+                      //                           Row(
+                      //                             children: [
+                      //                               const SizedBox(width: 22),
+                      //                               Text(
+                      //                                 '$totalEstimasi',
+                      //                                 style: TextStyle(
+                      //                                   fontSize: 14,
+                      //                                 ),
+                      //                               ),
+                      //                             ],
+                      //                           ),
+                      //                           const SizedBox(height: 4),
+                      //                           Row(
+                      //                             children: [
+                      //                               const Icon(
+                      //                                 Icons.calendar_today,
+                      //                                 size: 18,
+                      //                                 color:
+                      //                                     AppColors.greyMedium,
+                      //                               ),
+                      //                               const SizedBox(width: 4),
+                      //                               Text(
+                      //                                 'Tanggal Dibutuhkan: ${entry.value['tgl_dibutuhkan'] ?? '-'}',
+                      //                                 style: const TextStyle(
+                      //                                   fontSize: 14,
+                      //                                 ),
+                      //                               ),
+                      //                             ],
+                      //                           ),
+                      //                           const SizedBox(height: 4),
+                      //                           Row(
+                      //                             children: [
+                      //                               const Icon(
+                      //                                 Icons.assignment,
+                      //                                 size: 18,
+                      //                                 color:
+                      //                                     AppColors.greyMedium,
+                      //                               ),
+                      //                               const SizedBox(width: 4),
+                      //                               Expanded(
+                      //                                 child: Text(
+                      //                                   'Keperluan: ${(entry.value['keperluan']?.toString().toLowerCase() == 'keperluan') ? '-' : '${entry.value['keperluan'] ?? '-'}'}',
+                      //                                   style: const TextStyle(
+                      //                                     fontSize: 14,
+                      //                                   ),
+                      //                                   maxLines: 3,
+                      //                                   overflow: TextOverflow
+                      //                                       .ellipsis,
+                      //                                 ),
+                      //                               ),
+                      //                             ],
+                      //                           ),
+                      //                           const SizedBox(height: 4),
+                      //                           Row(
+                      //                             children: [
+                      //                               const Icon(
+                      //                                 Icons.location_on,
+                      //                                 size: 18,
+                      //                                 color:
+                      //                                     AppColors.greyMedium,
+                      //                               ),
+                      //                               const SizedBox(width: 4),
+                      //                               Expanded(
+                      //                                 child: Text(
+                      //                                   'Lokasi Penggunaan: ${(entry.value['lokasi']?.toString().toLowerCase() == 'lokasi') ? '-' : '${entry.value['lokasi'] ?? '-'}'}',
+                      //                                   style: const TextStyle(
+                      //                                     fontSize: 14,
+                      //                                   ),
+                      //                                   maxLines: 3,
+                      //                                   overflow: TextOverflow
+                      //                                       .ellipsis,
+                      //                                 ),
+                      //                               ),
+                      //                             ],
+                      //                           ),
+                      //                           const SizedBox(height: 4),
+                      //                           Row(
+                      //                             children: [
+                      //                               const Icon(
+                      //                                 Icons.info_outline,
+                      //                                 size: 18,
+                      //                                 color:
+                      //                                     AppColors.greyMedium,
+                      //                               ),
+                      //                               const SizedBox(width: 4),
+                      //                               Expanded(
+                      //                                 child: Text(
+                      //                                   'Keterangan Item: ${(entry.value['keterangan_item']?.toString().toLowerCase() == 'keterangan item') ? '-' : '${entry.value['keterangan_item'] ?? '-'}'}',
+                      //                                   style: const TextStyle(
+                      //                                     fontSize: 14,
+                      //                                   ),
+                      //                                   maxLines: 3,
+                      //                                   overflow: TextOverflow
+                      //                                       .ellipsis,
+                      //                                 ),
+                      //                               ),
+                      //                             ],
+                      //                           ),
+                      //                         ],
+                      //                       ),
+                      //                     ),
+                      //                   ],
+                      //                 );
+                      //               })(),
+                      //           ],
+                      //         ),
+                      //       ],
+                      //     ),
+                      //   ),
+                      // ],
                       // Rekap Pembelian
-                      if (detailData?['rekap_pembelian'] != null) ...[
+                      if (detailData?['rekap_pembayaran'] != null) ...[
                         Container(
                           margin: const EdgeInsets.symmetric(vertical: 6.0),
                           padding: const EdgeInsets.symmetric(
@@ -1043,7 +1059,7 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                                             ),
                                             const SizedBox(height: 8),
                                             Text(
-                                              detailData!['rekap_pembelian']['jenis_jasa'] !=
+                                              detailData!['rekap_pembayaran']['jenis_jasa'] !=
                                                       null
                                                   ? 'Total Jenis Jasa'
                                                   : 'Total Jenis Barang',
@@ -1054,7 +1070,7 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              '${detailData!['rekap_pembelian']['jenis_jasa'] ?? detailData!['rekap_pembelian']['jenis_barang'] ?? '-'}',
+                                              '${detailData!['rekap_pembayaran']['jenis_jasa'] ?? detailData!['rekap_pembayaran']['jenis_barang'] ?? '-'}',
                                               style: const TextStyle(
                                                 fontSize: 14,
                                               ),
@@ -1091,7 +1107,7 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              '${detailData!['rekap_pembelian']['total_biaya'] ?? '-'}',
+                                              '${detailData!['rekap_pembayaran']['total_biaya'] ?? '-'}',
                                               style: const TextStyle(
                                                 fontSize: 14,
                                               ),
@@ -1126,7 +1142,7 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                                             ),
                                             const SizedBox(height: 8),
                                             const Text(
-                                              'Kembali',
+                                              'Uang Kembali',
                                               style: TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 14,
@@ -1134,7 +1150,7 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              '${detailData!['rekap_pembelian']['kembali'] ?? '-'}',
+                                              '${detailData!['rekap_pembayaran']['kembali'] ?? '-'}',
                                               style: const TextStyle(
                                                 fontSize: 14,
                                               ),
@@ -1171,17 +1187,17 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              '${detailData!['rekap_pembelian']['metode_pembayaran'] ?? '-'}',
+                                              '${detailData!['rekap_pembayaran']['metode_pembayaran'] ?? '-'}',
                                               style: const TextStyle(
                                                 fontSize: 14,
                                               ),
                                             ),
                                             const SizedBox(height: 8),
                                             // Tambahan info jika metode transfer
-                                            if (detailData!['rekap_pembelian']['metode_pembayaran'] ==
+                                            if (detailData!['rekap_pembayaran']['metode_pembayaran'] ==
                                                 'Transfer') ...[
                                               const SizedBox(height: 4),
-                                              ...((detailData!['rekap_pembelian']['tujuan_transfer'] ??
+                                              ...((detailData!['rekap_pembayaran']['tujuan_transfer'] ??
                                                       '-')
                                                   .toString()
                                                   .split(';')
@@ -1194,21 +1210,21 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                                                     ),
                                                   )
                                                   .toList()),
-                                              if (detailData!['rekap_pembelian']['uang_kembali_transfer'] !=
+                                              if (detailData!['rekap_pembayaran']['uang_kembali_transfer'] !=
                                                   null) ...[
                                                 const SizedBox(height: 2),
                                                 Text(
-                                                  'Uang Kembali Transfer: ${detailData!['rekap_pembelian']['uang_kembali_transfer']}',
+                                                  'Uang Kembali Transfer: ${detailData!['rekap_pembayaran']['uang_kembali_transfer']}',
                                                   style: const TextStyle(
                                                     fontSize: 12,
                                                   ),
                                                 ),
                                               ],
-                                              if (detailData!['rekap_pembelian']['biaya_transfer'] !=
+                                              if (detailData!['rekap_pembayaran']['biaya_transfer'] !=
                                                   null) ...[
                                                 const SizedBox(height: 2),
                                                 Text(
-                                                  'Biaya Transfer: ${detailData!['rekap_pembelian']['biaya_transfer']}',
+                                                  'Biaya Transfer: ${detailData!['rekap_pembayaran']['biaya_transfer']}',
                                                   style: const TextStyle(
                                                     fontSize: 12,
                                                   ),
@@ -1216,18 +1232,18 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                                               ],
                                               const SizedBox(height: 2),
                                               Text(
-                                                'Berita Transfer: ${detailData!['rekap_pembelian']['berita_transfer'] ?? '-'}',
+                                                'Berita Transfer: ${detailData!['rekap_pembayaran']['berita_transfer'] ?? '-'}',
                                                 style: const TextStyle(
                                                   fontSize: 12,
                                                 ),
                                               ),
                                             ],
                                             // Catatan pembelian darurat
-                                            if (detailData!['rekap_pembelian']['catatan'] !=
+                                            if (detailData!['rekap_pembayaran']['catatan'] !=
                                                 null) ...[
                                               const SizedBox(height: 4),
                                               Text(
-                                                '${detailData!['rekap_pembelian']['catatan']}',
+                                                '${detailData!['rekap_pembayaran']['catatan']}',
                                                 style: const TextStyle(
                                                   fontSize: 12,
                                                   color: AppColors.error,
@@ -1894,23 +1910,14 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
                                           }
                                         })(),
                                         decoration: BoxDecoration(
-                                          color:
-                                              st['kode_status'] == 99 ||
-                                                  st['kode_status'] == 89 ||
-                                                  st['kode_status'] == 79
-                                              ? AppColors.error
-                                              : st['kode_status'] == 500
-                                              ? AppColors.greyMedium
-                                              : AppColors.success,
+                                          color: AppStatus.getStatusColor(
+                                            st['kode_status'],
+                                          ),
                                         ),
                                         child: Icon(
-                                          st['kode_status'] == 99 ||
-                                                  st['kode_status'] == 89 ||
-                                                  st['kode_status'] == 79
-                                              ? Icons.close
-                                              : st['kode_status'] == 500
-                                              ? Icons.access_time
-                                              : Icons.check,
+                                          AppStatus.getStatusIcon(
+                                            st['kode_status'],
+                                          ),
                                           color: Colors.white,
                                           size: 28,
                                         ),
@@ -1995,7 +2002,7 @@ class _DetailTransaksiGantungScreenState extends State<DetailTransaksiGantungScr
       //               ? '-'
       //               : '${detailData!['model_pembelian']['keterangan'] ?? '-'}',
       //           total_biaya:
-      //               '${detailData!['rekap_pembelian']['total_biaya'] ?? '-'}',
+      //               '${detailData!['rekap_pembayaran']['total_biaya'] ?? '-'}',
       //         ),
       //       ),
       //     );

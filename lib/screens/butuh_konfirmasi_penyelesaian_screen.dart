@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:validator/screens/dashboard_screen.dart';
+import 'package:validator/screens/detail_butuh_konfirmasi_penyelesaian_screen.dart';
 import 'package:validator/screens/login_screen.dart';
 import 'package:validator/screens/searching_screen.dart';
 import 'package:validator/services/api_service.dart';
@@ -375,18 +376,19 @@ class _ButuhKonfirmasiPenyelesaianScreenState
                         final item = butuhKonfirmasiPenyelesaianList[index];
                         return GestureDetector(
                           onTap: () async {
-                            // final result = await Navigator.of(context).push(
-                            //   MaterialPageRoute(
-                            //     builder: (context) => DetailButuhKonfirmasiPenyelesaianScreen(
-                            //       pembelianId: item['id_pembelian'],
-                            //       userId: userId,
-                            //     ),
-                            //   ),
-                            // );
-                            // // Jika kembali dari detail dan result == true, refresh data
-                            // if (result == 'reload') {
-                            //   _fetchButuhKonfirmasiPenyelesaian();
-                            // }
+                            final result = await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    DetailButuhKonfrimasiPenyelesaianScreen(
+                                      bayarId: item['id_bayar'],
+                                      userId: userId,
+                                    ),
+                              ),
+                            );
+                            // Jika kembali dari detail dan result == true, refresh data
+                            if (result == 'reload') {
+                              _fetchButuhKonfirmasiPenyelesaian();
+                            }
                           },
                           child: SizedBox(
                             width: MediaQuery.of(context).size.width,

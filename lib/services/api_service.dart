@@ -259,14 +259,14 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> pembayaranView({
+  static Future<Map<String, dynamic>> pembayaranViewValidator({
     required String idBayar,
     required String userId,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
 
-    final url = Uri.parse('${baseurl}pembayaran-view');
+    final url = Uri.parse('${baseurl}pembayaran-view-validator');
     final response = await http.post(
       url,
       headers: {
@@ -279,6 +279,33 @@ class ApiService {
       return json.decode(response.body);
     } else {
       throw Exception('Failed to fetch pembayaran view');
+    }
+  }
+
+  static Future<Map<String, dynamic>> konfirmasiBarangTibaApproval({
+    required String idBayar,
+    required String userId,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('${baseurl}konfirmasi-barang-tiba-approval');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({'id_bayar': idBayar, 'user_id': userId}),
+    );
+
+    print('URL: $url');
+    print('Request Body: ${json.encode({'id_bayar': idBayar, 'user_id': userId})}');
+    print('Response Status: ${response.statusCode}');
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to fetch konfirmasi barang tiba');
     }
   }
 

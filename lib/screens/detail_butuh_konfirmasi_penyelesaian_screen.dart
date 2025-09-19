@@ -14,21 +14,21 @@ import 'dart:io';
 import 'package:flutter_file_downloader/flutter_file_downloader.dart';
 import 'package:open_file/open_file.dart';
 
-class DetailButuhPersetujuanScreen extends StatefulWidget {
-  final int pembelianId;
+class DetailButuhKonfrimasiPenyelesaianScreen extends StatefulWidget {
+  final int bayarId;
   final int userId;
 
-  const DetailButuhPersetujuanScreen({
+  const DetailButuhKonfrimasiPenyelesaianScreen({
     Key? key,
-    required this.pembelianId,
+    required this.bayarId,
     required this.userId,
   }) : super(key: key);
 
   @override
-  State<DetailButuhPersetujuanScreen> createState() => _DetailButuhPersetujuanScreenState();
+  State<DetailButuhKonfrimasiPenyelesaianScreen> createState() => _DetailButuhKonfrimasiPenyelesaianScreenState();
 }
 
-class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScreen> {
+class _DetailButuhKonfrimasiPenyelesaianScreenState extends State<DetailButuhKonfrimasiPenyelesaianScreen> {
   Map<String, dynamic>? detailData;
   bool isLoading = true;
   String? errorMsg;
@@ -45,8 +45,8 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
       errorMsg = null;
     });
     try {
-      final result = await ApiService.pembelianTambahDetailApproval(
-        pembelianId: widget.pembelianId.toString(),
+      final result = await ApiService.konfirmasiBarangTibaApproval(
+        idBayar: widget.bayarId.toString(),
         userId: widget.userId.toString(),
       );
       setState(() {
@@ -258,7 +258,7 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Detail Approval'),
+        title: const Text('Pembayaran View Validator'),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -292,89 +292,13 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // CATATAN: Gantung Tunai
-                      if (detailData?['gantung_tunai'] != null &&
-                          detailData!['gantung_tunai']
-                              .toString()
-                              .trim()
-                              .isNotEmpty) ...[
-                        SizedBox(
-                          width: double.infinity,
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            color: AppColors.error,
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                const Text(
-                                  'CATATAN:',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'Divisi/Jalur: [${detailData!['model_pembelian']['nama_divisi'] ?? '-'}] memiliki transaksi tunai gantung sebesar: ${detailData!['gantung_tunai']}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-
-                      // CATATAN BENDAHARA (Keuangan Transfer Note Permission)
-                      if ((detailData?['can_keuangan_transfer_note_permission'] ==
-                              true) &&
-                          (detailData?['model_pembelian']?['cek_bendahara_at'] !=
-                              null)) ...[
-                        SizedBox(
-                          width: double.infinity,
-                          child: Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            color: AppColors.orange,
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.center,
-                              children: [
-                                const Text(
-                                  'Sudah Dicek Bendahara',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  'CATATAN BENDAHARA: ${detailData!['model_pembelian']['cek_bendahara_note']?.toString().trim().isNotEmpty == true ? detailData!['model_pembelian']['cek_bendahara_note'] : '-'}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
 
                       // Model Pembelian
                       // Judul Pengadaan Jasa Luar
                       Text(
                         detailData!['model_pembelian']['barang_jasa'] == 1
-                            ? 'Pembelian Barang Baru'
-                            : 'Pengadaan Jasa Luar',
+                            ? 'Data Barang yang dibeli'
+                            : 'Data Jasa Luar yang diajukan',
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 18,
@@ -384,7 +308,7 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                       if (detailData?['model_pembelian'] != null) ...[
                         Container(
                           margin: const EdgeInsets.symmetric(vertical: 6.0),
-                          decoration: BoxDecoration(
+                          decoration: BoxDecoration(  
                             border: Border.all(
                               color: AppColors.greyLight,
                               width: 1.2,
@@ -418,7 +342,7 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                                   ),
                                   Padding(
                                     padding: const EdgeInsets.all(8.0),
-                                    child: Text(
+                                    child: Text( 
                                       '${detailData!['model_pembelian']['no_ppb'] ?? '-'}',
                                     ),
                                   ),
@@ -555,7 +479,7 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                                   ),
                                   Container(
                                     decoration: BoxDecoration(
-                                     color: AppStatus.getStatusColor(
+                                      color: AppStatus.getStatusColor(
                                          detailData!['model_pembelian']['status'],
                                       ),
                                     ),
@@ -752,7 +676,7 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                           ),
                         ),
                       ],
-                      // Data Provider - Daftar Jasa Luar
+                      // // Data Provider - Daftar Jasa Luar
                       if (detailData?['dataProvider'] != null &&
                           detailData!['dataProvider'] is List &&
                           detailData!['dataProvider'].isNotEmpty &&
@@ -1077,7 +1001,7 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                         ),
                       ],
                       // Rekap Pembelian
-                      if (detailData?['rekap_pembelian'] != null) ...[
+                      if (detailData?['rekap_pembayaran'] != null) ...[
                         Container(
                           margin: const EdgeInsets.symmetric(vertical: 6.0),
                           padding: const EdgeInsets.symmetric(
@@ -1115,7 +1039,7 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                                             ),
                                             const SizedBox(height: 8),
                                             Text(
-                                              detailData!['rekap_pembelian']['jenis_jasa'] !=
+                                              detailData!['rekap_pembayaran']['jenis_jasa'] !=
                                                       null
                                                   ? 'Total Jenis Jasa'
                                                   : 'Total Jenis Barang',
@@ -1126,7 +1050,7 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              '${detailData!['rekap_pembelian']['jenis_jasa'] ?? detailData!['rekap_pembelian']['jenis_barang'] ?? '-'}',
+                                              '${detailData!['rekap_pembayaran']['jenis_jasa'] ?? detailData!['rekap_pembayaran']['jenis_barang'] ?? '-'}',
                                               style: const TextStyle(
                                                 fontSize: 14,
                                               ),
@@ -1163,7 +1087,7 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              '${detailData!['rekap_pembelian']['total_biaya'] ?? '-'}',
+                                              '${detailData!['rekap_pembayaran']['total_biaya'] ?? '-'}',
                                               style: const TextStyle(
                                                 fontSize: 14,
                                               ),
@@ -1198,7 +1122,7 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                                             ),
                                             const SizedBox(height: 8),
                                             const Text(
-                                              'Kembali',
+                                              'Uang Kembali',
                                               style: TextStyle(
                                                 fontWeight: FontWeight.bold,
                                                 fontSize: 14,
@@ -1206,7 +1130,7 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              '${detailData!['rekap_pembelian']['kembali'] ?? '-'}',
+                                              '${detailData!['rekap_pembayaran']['kembali'] ?? '-'}',
                                               style: const TextStyle(
                                                 fontSize: 14,
                                               ),
@@ -1243,17 +1167,17 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                                             ),
                                             const SizedBox(height: 4),
                                             Text(
-                                              '${detailData!['rekap_pembelian']['metode_pembayaran'] ?? '-'}',
+                                              '${detailData!['rekap_pembayaran']['metode_pembayaran'] ?? '-'}',
                                               style: const TextStyle(
                                                 fontSize: 14,
                                               ),
                                             ),
                                             const SizedBox(height: 8),
                                             // Tambahan info jika metode transfer
-                                            if (detailData!['rekap_pembelian']['metode_pembayaran'] ==
+                                            if (detailData!['rekap_pembayaran']['metode_pembayaran'] ==
                                                 'Transfer') ...[
                                               const SizedBox(height: 4),
-                                              ...((detailData!['rekap_pembelian']['tujuan_transfer'] ??
+                                              ...((detailData!['rekap_pembayaran']['tujuan_transfer'] ??
                                                       '-')
                                                   .toString()
                                                   .split(';')
@@ -1266,21 +1190,21 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                                                     ),
                                                   )
                                                   .toList()),
-                                              if (detailData!['rekap_pembelian']['uang_kembali_transfer'] !=
+                                              if (detailData!['rekap_pembayaran']['uang_kembali_transfer'] !=
                                                   null) ...[
                                                 const SizedBox(height: 2),
                                                 Text(
-                                                  'Uang Kembali Transfer: ${detailData!['rekap_pembelian']['uang_kembali_transfer']}',
+                                                  'Uang Kembali Transfer: ${detailData!['rekap_pembayaran']['uang_kembali_transfer']}',
                                                   style: const TextStyle(
                                                     fontSize: 12,
                                                   ),
                                                 ),
                                               ],
-                                              if (detailData!['rekap_pembelian']['biaya_transfer'] !=
+                                              if (detailData!['rekap_pembayaran']['biaya_transfer'] !=
                                                   null) ...[
                                                 const SizedBox(height: 2),
                                                 Text(
-                                                  'Biaya Transfer: ${detailData!['rekap_pembelian']['biaya_transfer']}',
+                                                  'Biaya Transfer: ${detailData!['rekap_pembayaran']['biaya_transfer']}',
                                                   style: const TextStyle(
                                                     fontSize: 12,
                                                   ),
@@ -1288,18 +1212,18 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                                               ],
                                               const SizedBox(height: 2),
                                               Text(
-                                                'Berita Transfer: ${detailData!['rekap_pembelian']['berita_transfer'] ?? '-'}',
+                                                'Berita Transfer: ${detailData!['rekap_pembayaran']['berita_transfer'] ?? '-'}',
                                                 style: const TextStyle(
                                                   fontSize: 12,
                                                 ),
                                               ),
                                             ],
                                             // Catatan pembelian darurat
-                                            if (detailData!['rekap_pembelian']['catatan'] !=
+                                            if (detailData!['rekap_pembayaran']['catatan'] !=
                                                 null) ...[
                                               const SizedBox(height: 4),
                                               Text(
-                                                '${detailData!['rekap_pembelian']['catatan']}',
+                                                '${detailData!['rekap_pembayaran']['catatan']}',
                                                 style: const TextStyle(
                                                   fontSize: 12,
                                                   color: AppColors.error,
@@ -1966,10 +1890,10 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                                           }
                                         })(),
                                         decoration: BoxDecoration(
-                                          color:AppStatus.getStatusColor(st['kode_status'])
+                                          color:AppStatus.getStatusColor(st['kode_status']),
                                         ),
                                         child: Icon(
-                                          AppStatus.getStatusIcon(st['kode_status']),
+                                         AppStatus.getStatusIcon(st['kode_status']),
                                           color: Colors.white,
                                           size: 28,
                                         ),
@@ -2028,177 +1952,44 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                           ),
                         ),
                       ],
-
-                      // // Model Pembelian Detail Approved
-                      // if (detailData?['model_pembelian_detail_approved'] !=
-                      //         null &&
-                      //     detailData!['model_pembelian_detail_approved']
-                      //         is Map &&
-                      //     detailData!['model_pembelian_detail_approved']
-                      //         .isNotEmpty) ...[
-                      //   Container(
-                      //     margin: const EdgeInsets.symmetric(vertical: 6.0),
-                      //     padding: const EdgeInsets.symmetric(
-                      //       vertical: 10.0,
-                      //       horizontal: 12.0,
-                      //     ),
-                      //     decoration: BoxDecoration(
-                      //       color: Colors.grey[100],
-                      //       borderRadius: BorderRadius.circular(8),
-                      //       border: Border.all(color: Colors.grey[300]!),
-                      //     ),
-                      //     child: Column(
-                      //       crossAxisAlignment: CrossAxisAlignment.start,
-                      //       children: [
-                      //         const Text(
-                      //           'Detail Approved',
-                      //           style: TextStyle(
-                      //             fontWeight: FontWeight.bold,
-                      //             fontSize: 16,
-                      //           ),
-                      //         ),
-                      //         const SizedBox(height: 6),
-                      //         ...detailData!['model_pembelian_detail_approved']
-                      //             .entries
-                      //             .map((entry) {
-                      //               final val = entry.value;
-                      //               return Column(
-                      //                 crossAxisAlignment:
-                      //                     CrossAxisAlignment.start,
-                      //                 children: [
-                      //                   Text(
-                      //                     'ID Jasaluar Detail Approved: ${val['id_jasaluar_detail_approved'] ?? '-'}',
-                      //                   ),
-                      //                   Text(
-                      //                     'ID Jasaluar Detail: ${val['id_jasaluar_detail'] ?? '-'}',
-                      //                   ),
-                      //                   Text(
-                      //                     'ID Pembelian: ${val['id_pembelian'] ?? '-'}',
-                      //                   ),
-                      //                   const SizedBox(height: 4),
-                      //                 ],
-                      //               );
-                      //             }),
-                      //       ],
-                      //     ),
-                      //   ),
-                      // ],
-                      // // Rekap Pembelian Approved
-                      // if (detailData?['rekap_pembelian_approved'] != null) ...[
-                      //   Container(
-                      //     margin: const EdgeInsets.symmetric(vertical: 6.0),
-                      //     padding: const EdgeInsets.symmetric(
-                      //       vertical: 10.0,
-                      //       horizontal: 12.0,
-                      //     ),
-                      //     decoration: BoxDecoration(
-                      //       color: Colors.grey[100],
-                      //       borderRadius: BorderRadius.circular(8),
-                      //       border: Border.all(color: Colors.grey[300]!),
-                      //     ),
-                      //     child: Column(
-                      //       crossAxisAlignment: CrossAxisAlignment.start,
-                      //       children: [
-                      //         const Text(
-                      //           'Rekap Pembelian Approved',
-                      //           style: TextStyle(
-                      //             fontWeight: FontWeight.bold,
-                      //             fontSize: 16,
-                      //           ),
-                      //         ),
-                      //         const SizedBox(height: 6),
-                      //         Text(
-                      //           'Jenis Jasa: ${detailData!['rekap_pembelian_approved']['jenis_jasa'] ?? '-'}',
-                      //         ),
-                      //         Text(
-                      //           'Total Biaya: ${detailData!['rekap_pembelian_approved']['total_biaya'] ?? '-'}',
-                      //         ),
-                      //       ],
-                      //     ),
-                      //   ),
-                      // ],
-                      // // Data Provider Bayar
-                      // if (detailData?['dataProviderBayar'] != null &&
-                      //     detailData!['dataProviderBayar'] is List &&
-                      //     detailData!['dataProviderBayar'].isNotEmpty) ...[
-                      //   Container(
-                      //     margin: const EdgeInsets.symmetric(vertical: 6.0),
-                      //     padding: const EdgeInsets.symmetric(
-                      //       vertical: 10.0,
-                      //       horizontal: 12.0,
-                      //     ),
-                      //     decoration: BoxDecoration(
-                      //       color: Colors.grey[100],
-                      //       borderRadius: BorderRadius.circular(8),
-                      //       border: Border.all(color: Colors.grey[300]!),
-                      //     ),
-                      //     child: Column(
-                      //       crossAxisAlignment: CrossAxisAlignment.start,
-                      //       children: [
-                      //         const Text(
-                      //           'Data Provider Bayar',
-                      //           style: TextStyle(
-                      //             fontWeight: FontWeight.bold,
-                      //             fontSize: 16,
-                      //           ),
-                      //         ),
-                      //         const SizedBox(height: 6),
-                      //         ...detailData!['dataProviderBayar'].map<Widget>(
-                      //           (bayar) => Column(
-                      //             crossAxisAlignment: CrossAxisAlignment.start,
-                      //             children: [
-                      //               Text(
-                      //                 'ID Bayar: ${bayar['id_bayar'] ?? '-'}',
-                      //               ),
-                      //               Text(
-                      //                 'ID Pembelian: ${bayar['id_pembelian'] ?? '-'}',
-                      //               ),
-                      //               const SizedBox(height: 4),
-                      //             ],
-                      //           ),
-                      //         ),
-                      //       ],
-                      //     ),
-                      //   ),
-                      // ],
                     ],
                   ),
                 ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => SetujuiTransaksiPembelianScreen(
-                pembelianId: widget.pembelianId,
-                userId: widget.userId,
-                barang_jasa: detailData!['model_pembelian']['barang_jasa'],
-                no_ppb: detailData!['model_pembelian']['no_ppb'],
-                tgl_pengajuan: detailData!['model_pembelian']['tgl_pengajuan'],
-                level: detailData!['level'],
-                divisi: detailData!['model_pembelian']['nama_divisi'],
-                keterangan:
-                    (detailData!['model_pembelian']['keterangan']
-                            ?.toString()
-                            .toLowerCase() ==
-                        'keterangan')
-                    ? '-'
-                    : '${detailData!['model_pembelian']['keterangan'] ?? '-'}',
-                total_biaya:
-                    '${detailData!['rekap_pembelian']['total_biaya'] ?? '-'}',
-              ),
-            ),
-          );
-        },
-        icon: const Icon(Icons.arrow_forward, color: Colors.white),
-        label: const Text(
-          'Persetujuan',
-          style: TextStyle(color: Colors.white, fontSize: 12),
-        ),
-        backgroundColor: AppColors.success,
-      ),
+      // floatingActionButton: FloatingActionButton.extended(
+      //   onPressed: () {
+      //     Navigator.push(
+      //       context,
+      //       MaterialPageRoute(
+      //         builder: (context) => SetujuiTransaksiPembelianScreen(
+      //           pembelianId: widget.pembelianId,
+      //           userId: widget.userId,
+      //           barang_jasa: detailData!['model_pembelian']['barang_jasa'],
+      //           no_ppb: detailData!['model_pembelian']['no_ppb'],
+      //           tgl_pengajuan: detailData!['model_pembelian']['tgl_pengajuan'],
+      //           level: detailData!['level'],
+      //           divisi: detailData!['model_pembelian']['nama_divisi'],
+      //           keterangan:
+      //               (detailData!['model_pembelian']['keterangan']
+      //                       ?.toString()
+      //                       .toLowerCase() ==
+      //                   'keterangan')
+      //               ? '-'
+      //               : '${detailData!['model_pembelian']['keterangan'] ?? '-'}',
+      //           total_biaya:
+      //               '${detailData!['rekap_pembayaran']['total_biaya'] ?? '-'}',
+      //         ),
+      //       ),
+      //     );
+      //   },
+      //   icon: const Icon(Icons.arrow_forward, color: Colors.white),
+      //   label: const Text(
+      //     'Persetujuan',
+      //     style: TextStyle(color: Colors.white, fontSize: 12),
+      //   ),
+      //   backgroundColor: AppColors.success,
+      // ),
     );
   }
 }
