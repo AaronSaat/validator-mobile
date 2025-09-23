@@ -492,8 +492,10 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text(
-                                            (item['barang_jasa'] == 1
+                                         Text(
+                                            // ignore: prefer_interpolation_to_compose_strings
+                                            '${index + 1}. ' +
+                                                (item['barang_jasa'] == 1
                                                     ? 'PPB: '
                                                     : 'PJL: ') +
                                                 (item['no_ppb'] ?? '-'),

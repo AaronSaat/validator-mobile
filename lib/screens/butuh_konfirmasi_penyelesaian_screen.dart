@@ -452,80 +452,87 @@ class _ButuhKonfirmasiPenyelesaianScreenState
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
+                                          // ignore: prefer_interpolation_to_compose_strings
+                                          '${index + 1}. ' +
                                             (item['barang_jasa'] == 1
-                                                    ? 'PPB: '
-                                                    : 'PJL: ') +
-                                                (item['no_ppb'] ?? '-'),
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                              ? 'PPB: '
+                                              : 'PJL: ') +
+                                            (item['no_ppb'] ?? '-'),
+                                          style: const TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                           ),
                                           const SizedBox(height: 8),
                                           Text(
-                                            '${item['tgl_uangkeluar'] ?? '-'}',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.normal,
-                                            ),
+                                          '${item['tgl_uangkeluar'] ?? '-'}',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.normal,
+                                          ),
                                           ),
                                           const SizedBox(height: 8),
                                           Text(
-                                            'Divisi: ${item['nama_divisi'] ?? '-'}',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.normal,
-                                            ),
+                                          'Divisi: ${item['nama_divisi'] ?? '-'}',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.normal,
+                                          ),
                                           ),
                                           Text(
-                                            'Nama Pemohon: ${item['nama_pemohon'] ?? '-'}',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.normal,
-                                            ),
+                                          'Nama Pemohon: ${item['nama_pemohon'] ?? '-'}',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.normal,
+                                          ),
                                           ),
                                           Text(
-                                            // ignore: prefer_interpolation_to_compose_strings
-                                            'Keperluan: ' +
-                                                ((item['keperluan']
-                                                            ?.toString()
-                                                            .toLowerCase() ==
-                                                        'keperluan')
-                                                    ? '-'
-                                                    : (item['keperluan'] ??
-                                                          '-')),
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.normal,
-                                            ),
+                                          // ignore: prefer_interpolation_to_compose_strings
+                                          'Keperluan: ' +
+                                            ((item['keperluan']
+                                                  ?.toString()
+                                                  .toLowerCase() ==
+                                                'keperluan')
+                                              ? '-'
+                                              : (item['keperluan'] ??
+                                                  '-')),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.normal,
                                           ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            'Tunai/Transfer:',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.normal,
-                                            ),
-                                          ),
-                                          Text(
-                                            (item['tunai_transfer'] != null
-                                                ? item['tunai_transfer']
-                                                      .toString()
-                                                      .split(';')
-                                                      .join('\n')
-                                                : '-'),
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.normal,
-                                            ),
                                           ),
                                           const SizedBox(height: 8),
                                           Text(
-                                            (item['bayar_total'] ?? '-'),
-                                            style: const TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.bold,
-                                            ),
+                                          'Tunai/Transfer:',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.normal,
+                                          ),
+                                          ),
+                                          Text(
+                                          (item['tunai_transfer'] != null
+                                            ? item['tunai_transfer']
+                                                .toString()
+                                                .split(';')
+                                                .join('\n')
+                                            : '-'),
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.normal,
+                                          ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                          item['bayar_realisasi'] != null &&
+                                              item['bayar_realisasi']
+                                                .toString()
+                                                .isNotEmpty
+                                            ? item['bayar_realisasi']
+                                            : (item['bayar_total'] ?? '-'),
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                           ),
                                         ],
                                       ),

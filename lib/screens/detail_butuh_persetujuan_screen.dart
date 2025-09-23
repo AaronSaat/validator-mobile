@@ -5,6 +5,8 @@ import 'package:validator/screens/setujui_transaksi_pembelian_screen.dart';
 import 'package:validator/utils/appcolors.dart';
 import 'package:validator/utils/appstatus.dart';
 import 'package:validator/utils/globalvariables.dart';
+import 'package:validator/widgets/tabelDaftarBarangDibeli.dart';
+import 'package:validator/widgets/tabelDaftarJasaLuar.dart';
 import '../services/api_service.dart';
 import 'package:photo_view/photo_view.dart';
 import 'package:flutter_pdfview/flutter_pdfview.dart';
@@ -25,10 +27,12 @@ class DetailButuhPersetujuanScreen extends StatefulWidget {
   }) : super(key: key);
 
   @override
-  State<DetailButuhPersetujuanScreen> createState() => _DetailButuhPersetujuanScreenState();
+  State<DetailButuhPersetujuanScreen> createState() =>
+      _DetailButuhPersetujuanScreenState();
 }
 
-class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScreen> {
+class _DetailButuhPersetujuanScreenState
+    extends State<DetailButuhPersetujuanScreen> {
   Map<String, dynamic>? detailData;
   bool isLoading = true;
   String? errorMsg;
@@ -258,7 +262,12 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Detail Approval'),
+        // mengikuti nama page dari web pengadaan
+        title: const Text(
+          'Pembelian Tambah Detail Approval',
+          style: TextStyle(fontSize: 14),
+          overflow: TextOverflow.ellipsis,
+        ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -555,8 +564,8 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                                   ),
                                   Container(
                                     decoration: BoxDecoration(
-                                     color: AppStatus.getStatusColor(
-                                         detailData!['model_pembelian']['status'],
+                                      color: AppStatus.getStatusColor(
+                                        detailData!['model_pembelian']['status'],
                                       ),
                                     ),
                                     padding: const EdgeInsets.symmetric(
@@ -580,500 +589,32 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                         ),
                       ],
 
-                      // Data Provider - Daftar Jasa Luar
+                      // Data Provider - Daftar Jasa Luar (barang jasa = 2)
                       if (detailData?['dataProvider'] != null &&
                           detailData!['dataProvider'] is List &&
                           detailData!['dataProvider'].isNotEmpty &&
-                          detailData!['dataProvider'][0]['id_jasaluar_detail'] !=
-                              null) ...[
-                        Container(
-                          width: double.infinity,
-                          margin: const EdgeInsets.symmetric(vertical: 6.0),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10.0,
-                            horizontal: 12.0,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey[300]!),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Daftar Jasa Luar',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Table(
-                                border: TableBorder.symmetric(
-                                  inside: BorderSide(
-                                    color: AppColors.greyLight,
-                                    width: 1.2,
-                                  ),
-                                ),
-                                columnWidths: const {
-                                  0: FlexColumnWidth(0.5),
-                                  1: FlexColumnWidth(3.5),
-                                },
-                                children: [
-                                  for (var entry
-                                      in detailData!['dataProvider']
-                                          .asMap()
-                                          .entries)
-                                    TableRow(
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 8,
-                                            horizontal: 8,
-                                          ),
-                                          alignment: Alignment.center,
-                                          child: Text(
-                                            '${entry.key + 1}',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 18,
-                                            ),
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            vertical: 8,
-                                            horizontal: 8,
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                '${entry.value['jenis_pekerjaan'] ?? '-'}',
-                                                style: const TextStyle(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Row(
-                                                children: [
-                                                  const Icon(
-                                                    Icons.business,
-                                                    size: 18,
-                                                    color: AppColors.greyMedium,
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    'Supplier Jasa: ${entry.value['supplier_jasa'] ?? '-'}',
-                                                    style: const TextStyle(
-                                                      fontSize: 14,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Row(
-                                                children: [
-                                                  const Icon(
-                                                    Icons.calendar_today,
-                                                    size: 18,
-                                                    color: AppColors.greyMedium,
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    'Tanggal Diselesaikan: ${entry.value['tgl_diselesaikan'] ?? '(not set)'}',
-                                                    style: const TextStyle(
-                                                      fontSize: 14,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                              const SizedBox(height: 4),
-                                              Row(
-                                                children: [
-                                                  const Icon(
-                                                    Icons.info_outline,
-                                                    size: 18,
-                                                    color: AppColors.greyMedium,
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  Expanded(
-                                                    child: Text(
-                                                      'Keterangan Item: ${(entry.value['keterangan_item']?.toString().toLowerCase() == 'keterangan item') ? '-' : '${entry.value['keterangan_item'] ?? '-'}'}',
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                      maxLines: 3,
-                                                      overflow:
-                                                          TextOverflow.ellipsis,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-
-                                              // Container(
-                                              //   margin:
-                                              //       const EdgeInsets.symmetric(
-                                              //         vertical: 4,
-                                              //       ),
-                                              //   padding:
-                                              //       const EdgeInsets.symmetric(
-                                              //         vertical: 6,
-                                              //         horizontal: 10,
-                                              //       ),
-                                              //   decoration: BoxDecoration(
-                                              //     color: AppColors.lightblue
-                                              //         .withAlpha(50),
-                                              //     borderRadius:
-                                              //         BorderRadius.circular(8),
-                                              //     border: Border.all(
-                                              //       color: AppColors.secondary,
-                                              //     ),
-                                              //   ),
-                                              //   child: Text(
-                                              //     'Estimasi Biaya: ${entry.value['estimasi_biaya'] ?? '-'}',
-                                              //     style: const TextStyle(
-                                              //       fontWeight: FontWeight.w500,
-                                              //       fontSize: 12,
-                                              //     ),
-                                              //   ),
-                                              // ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                ],
-                              ),
-                            ],
-                          ),
+                          detailData!['model_pembelian']['barang_jasa'] ==
+                              2) ...[
+                        TabelDaftarJasaLuar(
+                          // Ubah dari List ke Map sebelum dikirim ke TabelDaftarJasaLuar
+                          detailData: {
+                            for (var item in detailData!['dataProvider'])
+                              item['id_pembelian_detail'].toString(): item,
+                          },
                         ),
                       ],
-                      // Data Provider - Daftar Jasa Luar
+                      // Data Provider - Daftar Barang Dibeli (barang jasa = 1)
                       if (detailData?['dataProvider'] != null &&
                           detailData!['dataProvider'] is List &&
                           detailData!['dataProvider'].isNotEmpty &&
-                          detailData!['dataProvider'][0]['id_pembelian_detail'] !=
-                              null) ...[
-                        Container(
-                          width: double.infinity,
-                          margin: const EdgeInsets.symmetric(vertical: 6.0),
-                          padding: const EdgeInsets.symmetric(
-                            vertical: 10.0,
-                            horizontal: 12.0,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[100],
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey[300]!),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Daftar Barang Detail',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Table(
-                                border: TableBorder.symmetric(
-                                  inside: BorderSide(
-                                    color: AppColors.greyLight,
-                                    width: 1.2,
-                                  ),
-                                ),
-                                columnWidths: const {
-                                  0: FlexColumnWidth(0.5),
-                                  1: FlexColumnWidth(3.5),
-                                },
-                                children: [
-                                  for (var entry
-                                      in detailData!['dataProvider']
-                                          .asMap()
-                                          .entries)
-                                    (() {
-                                      final jumlah =
-                                          int.tryParse(
-                                            entry.value['jumlah'].toString(),
-                                          ) ??
-                                          0;
-                                      final estimasiHargaSatuan =
-                                          int.tryParse(
-                                            (entry.value['estimasi_harga_satuan']
-                                                    ?.toString()
-                                                    .replaceAll('.00', '')) ??
-                                                '0',
-                                          ) ??
-                                          0;
-                                      final total =
-                                          (jumlah > 0 &&
-                                              estimasiHargaSatuan > 0)
-                                          ? (jumlah * estimasiHargaSatuan)
-                                                .toString()
-                                          : '-.00';
-                                      // Format total dengan koma dan tambahkan ".00"
-                                      final totalEstimasi = total != '-.00'
-                                          ? '${(jumlah * estimasiHargaSatuan).toString().replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (match) => '${match.group(1)},')}.00'
-                                          : '-.00';
-
-                                      final estimasiHargaSatuanFormatted =
-                                          (entry.value['estimasi_harga_satuan'] !=
-                                                  null &&
-                                              entry
-                                                  .value['estimasi_harga_satuan']
-                                                  .toString()
-                                                  .isNotEmpty &&
-                                              entry.value['estimasi_harga_satuan']
-                                                      .toString() !=
-                                                  '0')
-                                          ? '${entry.value['estimasi_harga_satuan'].toString().replaceAll('.00', '').replaceAllMapped(RegExp(r'(\d)(?=(\d{3})+(?!\d))'), (match) => '${match.group(1)},')}.00'
-                                          : '-';
-                                      return TableRow(
-                                        children: [
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 8,
-                                              horizontal: 8,
-                                            ),
-                                            alignment: Alignment.center,
-                                            child: Text(
-                                              '${entry.key + 1}',
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 18,
-                                              ),
-                                            ),
-                                          ),
-                                          Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              vertical: 8,
-                                              horizontal: 8,
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  '${entry.value['nama_barang'] ?? '-'}',
-                                                  style: const TextStyle(
-                                                    fontSize: 18,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 8),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.local_offer,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      'Merk: ${entry.value['merk'] ?? '-'}',
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(width: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.confirmation_number,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      'Jumlah: ${entry.value['jumlah'] ?? '-'}',
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.straighten,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      'Satuan: ${entry.value['satuan'] ?? '-'}',
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.attach_money,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      'Estimasi Harga Satuan:',
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    const SizedBox(width: 22),
-                                                    Text(
-                                                      '${estimasiHargaSatuanFormatted}',
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.calculate,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      'Total Estimasi:',
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    const SizedBox(width: 22),
-                                                    Text(
-                                                      '$totalEstimasi',
-                                                      style: TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.calendar_today,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Text(
-                                                      'Tanggal Dibutuhkan: ${entry.value['tgl_dibutuhkan'] ?? '-'}',
-                                                      style: const TextStyle(
-                                                        fontSize: 14,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.assignment,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Expanded(
-                                                      child: Text(
-                                                        'Keperluan: ${(entry.value['keperluan']?.toString().toLowerCase() == 'keperluan') ? '-' : '${entry.value['keperluan'] ?? '-'}'}',
-                                                        style: const TextStyle(
-                                                          fontSize: 14,
-                                                        ),
-                                                        maxLines: 3,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.location_on,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Expanded(
-                                                      child: Text(
-                                                        'Lokasi Penggunaan: ${(entry.value['lokasi']?.toString().toLowerCase() == 'lokasi') ? '-' : '${entry.value['lokasi'] ?? '-'}'}',
-                                                        style: const TextStyle(
-                                                          fontSize: 14,
-                                                        ),
-                                                        maxLines: 3,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(
-                                                      Icons.info_outline,
-                                                      size: 18,
-                                                      color:
-                                                          AppColors.greyMedium,
-                                                    ),
-                                                    const SizedBox(width: 4),
-                                                    Expanded(
-                                                      child: Text(
-                                                        'Keterangan Item: ${(entry.value['keterangan_item']?.toString().toLowerCase() == 'keterangan item') ? '-' : '${entry.value['keterangan_item'] ?? '-'}'}',
-                                                        style: const TextStyle(
-                                                          fontSize: 14,
-                                                        ),
-                                                        maxLines: 3,
-                                                        overflow: TextOverflow
-                                                            .ellipsis,
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ],
-                                      );
-                                    })(),
-                                ],
-                              ),
-                            ],
-                          ),
+                          detailData!['model_pembelian']['barang_jasa'] ==
+                              1) ...[
+                        TabelDaftarBarangDibeli(
+                          // Ubah dari List ke Map sebelum dikirim ke TabelDaftarBarangDibeli
+                          detailData: {
+                            for (var item in detailData!['dataProvider'])
+                              item['id_pembelian_detail'].toString(): item,
+                          },
                         ),
                       ],
                       // Rekap Pembelian
@@ -1966,10 +1507,14 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                                           }
                                         })(),
                                         decoration: BoxDecoration(
-                                          color:AppStatus.getStatusColor(st['kode_status'])
+                                          color: AppStatus.getStatusColor(
+                                            st['kode_status'],
+                                          ),
                                         ),
                                         child: Icon(
-                                          AppStatus.getStatusIcon(st['kode_status']),
+                                          AppStatus.getStatusIcon(
+                                            st['kode_status'],
+                                          ),
                                           color: Colors.white,
                                           size: 28,
                                         ),
@@ -2028,139 +1573,6 @@ class _DetailButuhPersetujuanScreenState extends State<DetailButuhPersetujuanScr
                           ),
                         ),
                       ],
-
-                      // // Model Pembelian Detail Approved
-                      // if (detailData?['model_pembelian_detail_approved'] !=
-                      //         null &&
-                      //     detailData!['model_pembelian_detail_approved']
-                      //         is Map &&
-                      //     detailData!['model_pembelian_detail_approved']
-                      //         .isNotEmpty) ...[
-                      //   Container(
-                      //     margin: const EdgeInsets.symmetric(vertical: 6.0),
-                      //     padding: const EdgeInsets.symmetric(
-                      //       vertical: 10.0,
-                      //       horizontal: 12.0,
-                      //     ),
-                      //     decoration: BoxDecoration(
-                      //       color: Colors.grey[100],
-                      //       borderRadius: BorderRadius.circular(8),
-                      //       border: Border.all(color: Colors.grey[300]!),
-                      //     ),
-                      //     child: Column(
-                      //       crossAxisAlignment: CrossAxisAlignment.start,
-                      //       children: [
-                      //         const Text(
-                      //           'Detail Approved',
-                      //           style: TextStyle(
-                      //             fontWeight: FontWeight.bold,
-                      //             fontSize: 16,
-                      //           ),
-                      //         ),
-                      //         const SizedBox(height: 6),
-                      //         ...detailData!['model_pembelian_detail_approved']
-                      //             .entries
-                      //             .map((entry) {
-                      //               final val = entry.value;
-                      //               return Column(
-                      //                 crossAxisAlignment:
-                      //                     CrossAxisAlignment.start,
-                      //                 children: [
-                      //                   Text(
-                      //                     'ID Jasaluar Detail Approved: ${val['id_jasaluar_detail_approved'] ?? '-'}',
-                      //                   ),
-                      //                   Text(
-                      //                     'ID Jasaluar Detail: ${val['id_jasaluar_detail'] ?? '-'}',
-                      //                   ),
-                      //                   Text(
-                      //                     'ID Pembelian: ${val['id_pembelian'] ?? '-'}',
-                      //                   ),
-                      //                   const SizedBox(height: 4),
-                      //                 ],
-                      //               );
-                      //             }),
-                      //       ],
-                      //     ),
-                      //   ),
-                      // ],
-                      // // Rekap Pembelian Approved
-                      // if (detailData?['rekap_pembelian_approved'] != null) ...[
-                      //   Container(
-                      //     margin: const EdgeInsets.symmetric(vertical: 6.0),
-                      //     padding: const EdgeInsets.symmetric(
-                      //       vertical: 10.0,
-                      //       horizontal: 12.0,
-                      //     ),
-                      //     decoration: BoxDecoration(
-                      //       color: Colors.grey[100],
-                      //       borderRadius: BorderRadius.circular(8),
-                      //       border: Border.all(color: Colors.grey[300]!),
-                      //     ),
-                      //     child: Column(
-                      //       crossAxisAlignment: CrossAxisAlignment.start,
-                      //       children: [
-                      //         const Text(
-                      //           'Rekap Pembelian Approved',
-                      //           style: TextStyle(
-                      //             fontWeight: FontWeight.bold,
-                      //             fontSize: 16,
-                      //           ),
-                      //         ),
-                      //         const SizedBox(height: 6),
-                      //         Text(
-                      //           'Jenis Jasa: ${detailData!['rekap_pembelian_approved']['jenis_jasa'] ?? '-'}',
-                      //         ),
-                      //         Text(
-                      //           'Total Biaya: ${detailData!['rekap_pembelian_approved']['total_biaya'] ?? '-'}',
-                      //         ),
-                      //       ],
-                      //     ),
-                      //   ),
-                      // ],
-                      // // Data Provider Bayar
-                      // if (detailData?['dataProviderBayar'] != null &&
-                      //     detailData!['dataProviderBayar'] is List &&
-                      //     detailData!['dataProviderBayar'].isNotEmpty) ...[
-                      //   Container(
-                      //     margin: const EdgeInsets.symmetric(vertical: 6.0),
-                      //     padding: const EdgeInsets.symmetric(
-                      //       vertical: 10.0,
-                      //       horizontal: 12.0,
-                      //     ),
-                      //     decoration: BoxDecoration(
-                      //       color: Colors.grey[100],
-                      //       borderRadius: BorderRadius.circular(8),
-                      //       border: Border.all(color: Colors.grey[300]!),
-                      //     ),
-                      //     child: Column(
-                      //       crossAxisAlignment: CrossAxisAlignment.start,
-                      //       children: [
-                      //         const Text(
-                      //           'Data Provider Bayar',
-                      //           style: TextStyle(
-                      //             fontWeight: FontWeight.bold,
-                      //             fontSize: 16,
-                      //           ),
-                      //         ),
-                      //         const SizedBox(height: 6),
-                      //         ...detailData!['dataProviderBayar'].map<Widget>(
-                      //           (bayar) => Column(
-                      //             crossAxisAlignment: CrossAxisAlignment.start,
-                      //             children: [
-                      //               Text(
-                      //                 'ID Bayar: ${bayar['id_bayar'] ?? '-'}',
-                      //               ),
-                      //               Text(
-                      //                 'ID Pembelian: ${bayar['id_pembelian'] ?? '-'}',
-                      //               ),
-                      //               const SizedBox(height: 4),
-                      //             ],
-                      //           ),
-                      //         ),
-                      //       ],
-                      //     ),
-                      //   ),
-                      // ],
                     ],
                   ),
                 ),

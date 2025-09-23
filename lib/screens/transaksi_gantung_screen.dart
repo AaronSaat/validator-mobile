@@ -369,8 +369,6 @@ class _TransaksiGantungScreenState extends State<TransaksiGantungScreen> {
                       itemCount: transaksiGantungList.length,
                       itemBuilder: (context, index) {
                         final item = transaksiGantungList[index];
-                        print(item['id_bayar']);
-                        print(item['id_bayar'].runtimeType);
                         return GestureDetector(
                           onTap: () async {
                             final result = await Navigator.of(context).push(
@@ -389,7 +387,7 @@ class _TransaksiGantungScreenState extends State<TransaksiGantungScreen> {
                           },
                           child: SizedBox(
                             width: MediaQuery.of(context).size.width,
-                            height: MediaQuery.of(context).size.height * 0.45,
+                            height: MediaQuery.of(context).size.height * 0.46,
                             child: Card(
                               margin: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -449,7 +447,9 @@ class _TransaksiGantungScreenState extends State<TransaksiGantungScreen> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            (item['barang_jasa'] == 1
+                                            // ignore: prefer_interpolation_to_compose_strings
+                                            '${index + 1}. ' +
+                                                (item['barang_jasa'] == 1
                                                     ? 'PPB: '
                                                     : 'PJL: ') +
                                                 (item['no_ppb'] ?? '-'),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:validator/screens/dashboard_screen.dart';
+import 'package:validator/screens/detail_transaksi_gantung_screen.dart';
 import 'package:validator/screens/login_screen.dart';
 import 'package:validator/screens/searching_screen.dart';
 import 'package:validator/services/api_service.dart';
@@ -387,18 +388,23 @@ class _ArsipTransaksiPernahDikembalikanOlehAndaScreenState
                             ArsipTransaksiPernahDikembalikanOlehAndaList[index];
                         return GestureDetector(
                           onTap: () async {
-                            // final result = await Navigator.of(context).push(
-                            //   MaterialPageRoute(
-                            //     builder: (context) => DetailArsipTransaksiPernahDikembalikanOlehAndaScreen(
-                            //       pembelianId: item['id_pembelian'],
-                            //       userId: userId,
-                            //     ),
-                            //   ),
-                            // );
-                            // // Jika kembali dari detail dan result == true, refresh data
-                            // if (result == 'reload') {
-                            //   _fetchArsipTransaksiPernahDikembalikanOlehAnda();
-                            // }
+                            final result = await Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    DetailTransaksiGantungScreen(
+                                      bayarId:
+                                          int.tryParse(
+                                            item['id_bayar'].toString(),
+                                          ) ??
+                                          0,
+                                      userId: userId,
+                                    ),
+                              ),
+                            );
+                            // Jika kembali dari detail dan result == true, refresh data
+                            if (result == 'reload') {
+                              _fetchArsipTransaksiPernahDikembalikanOlehAnda();
+                            }
                           },
                           child: SizedBox(
                             width: MediaQuery.of(context).size.width,
@@ -472,7 +478,9 @@ class _ArsipTransaksiPernahDikembalikanOlehAndaScreenState
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            (item['barang_jasa'] == 1
+                                            // ignore: prefer_interpolation_to_compose_strings
+                                            '${index + 1}. ' +
+                                                (item['barang_jasa'] == 1
                                                     ? 'PPB: '
                                                     : 'PJL: ') +
                                                 (item['no_ppb'] ?? '-'),
