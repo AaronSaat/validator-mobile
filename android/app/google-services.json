@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "592674573023",
+    "project_id": "validator-mobile-saat",
+    "storage_bucket": "validator-mobile-saat.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:592674573023:android:609ea091fccfbe25deb76a",
+        "android_client_info": {
+          "package_name": "com.example.validator"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA7qD4VJ1zPpKt3TuGCiG7-odIBg7TcRXI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:validator/screens/dashboard_screen.dart';
 import 'package:validator/screens/butuh_persetujuan_screen.dart';
 import 'package:validator/services/api_service.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -34,6 +35,9 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setString('nama', user['nama']?.toString() ?? '');
         await prefs.setString('email', user['email'] ?? '');
 
+        String? token = await FirebaseMessaging.instance.getToken();
+        print('FCM Token: $token');
+
         final dataToPrint = {
           'token': result['token'],
           'id': user['id'],
@@ -48,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
         ).showSnackBar(const SnackBar(content: Text('Login berhasil!')));
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
-            builder: (context) => const DashboardScreen(fromScreen: "login",),
+            builder: (context) => const DashboardScreen(fromScreen: "login"),
           ),
         );
       } else {
