@@ -1,4 +1,6 @@
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:validator/screens/arsip_transaksi_pernah_dikembalikan_oleh_anda_screen.dart';
 import 'package:validator/screens/arsip_transaksi_screen.dart';
@@ -13,7 +15,8 @@ import 'package:intl/intl.dart';
 import '../utils/appcolors.dart';
 import 'dart:io';
 import 'package:app_badge_plus/app_badge_plus.dart';
-import 'package:permission_handler/permission_handler.dart' as permission_handler;
+import 'package:permission_handler/permission_handler.dart'
+    as permission_handler;
 
 class DashboardScreen extends StatefulWidget {
   final String?
@@ -33,13 +36,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String? errorMsg;
 
   bool isSupported = false;
-   bool isNotificationAllowed = false;
+  bool isNotificationAllowed = false;
+
+  final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+      FlutterLocalNotificationsPlugin();
 
   @override
   void initState() {
     super.initState();
 
-    
+    // Inisialisasi plugin notifikasi lokal
+    const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const initSettings = InitializationSettings(android: androidInit);
+    flutterLocalNotificationsPlugin.initialize(initSettings);
+
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      print('Pesan FCM masuk: ${message.notification?.title}');
+      _showLocalNotification(message);
+    });
+
     allowNotification();
     AppBadgePlus.isSupported().then((value) {
       isSupported = value;
@@ -153,7 +168,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         isNotificationAllowed = true;
         setState(() {});
       } else {
-        await permission_handler.Permission.notification.request().then((value) {
+        await permission_handler.Permission.notification.request().then((
+          value,
+        ) {
           if (value.isGranted) {
             isNotificationAllowed = true;
             setState(() {});
@@ -168,6 +185,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
     } else {
       print('This platform is not supported for notification permissions.');
     }
+  }
+
+  void _showLocalNotification(RemoteMessage message) {
+    const androidDetails = AndroidNotificationDetails(
+      'fcm_channel', // id channel
+      'FCM Notifications', // nama channel
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+    const notifDetails = NotificationDetails(android: androidDetails);
+
+    flutterLocalNotificationsPlugin.show(
+      message.hashCode,
+      message.notification?.title ?? 'Notifikasi',
+      message.notification?.body ?? '',
+      notifDetails,
+    );
   }
 
   @override

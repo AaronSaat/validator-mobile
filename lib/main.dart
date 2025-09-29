@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:validator/screens/login_screen.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart'; // jika pakai flutterfire cli
+import 'firebase_options.dart'; 
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
