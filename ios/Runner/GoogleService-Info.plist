@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyCfJbewCAfXF3emrXIwYZzLNTNTnzM9lu4</string>
+	<key>GCM_SENDER_ID</key>
+	<string>592674573023</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.saat.validatorpengadaan</string>
+	<key>PROJECT_ID</key>
+	<string>validator-mobile-saat</string>
+	<key>STORAGE_BUCKET</key>
+	<string>validator-mobile-saat.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:592674573023:ios:b47e4306e33b6fd0deb76a</string>
+</dict>
+</plist>
