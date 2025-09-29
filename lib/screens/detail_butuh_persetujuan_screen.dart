@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:validator/screens/setujui_transaksi_pembelian_screen.dart';
+import 'package:validator/screens/setujui_transaksi_screen.dart';
 import 'package:validator/utils/appcolors.dart';
 import 'package:validator/utils/appstatus.dart';
 import 'package:validator/utils/globalvariables.dart';
@@ -863,9 +863,7 @@ class _DetailButuhPersetujuanScreenState
                       // Data Provider Upload
                       if (detailData?['dataProviderUpload'] != null &&
                           detailData!['dataProviderUpload'] is List &&
-                          detailData!['dataProviderUpload'].isNotEmpty &&
-                          detailData!['dataProviderUpload'][0]['tahap'] ==
-                              1) ...[
+                          detailData!['dataProviderUpload'].isNotEmpty) ...[
                         Container(
                           margin: const EdgeInsets.symmetric(vertical: 6.0),
                           padding: const EdgeInsets.only(top: 10.0),
@@ -960,7 +958,7 @@ class _DetailButuhPersetujuanScreenState
                                         ),
                                       ],
                                     ),
-                                    ...detailData!['dataProviderUpload'].map<
+                                    ...detailData!['dataProviderUpload'].where((up) => up['tahap'] == 1).map<
                                       TableRow
                                     >((up) {
                                       return TableRow(
@@ -1157,9 +1155,7 @@ class _DetailButuhPersetujuanScreenState
                       // Data Provider Bayar Upload
                       if (detailData?['dataProviderBayarUpload'] != null &&
                           detailData!['dataProviderBayarUpload'] is List &&
-                          detailData!['dataProviderBayarUpload'].isNotEmpty &&
-                          detailData!['dataProviderBayarUpload'][0]['tahap'] ==
-                              2) ...[
+                          detailData!['dataProviderBayarUpload'].isNotEmpty) ...[
                         Container(
                           margin: const EdgeInsets.symmetric(vertical: 6.0),
                           padding: const EdgeInsets.only(top: 10.0),
@@ -1253,10 +1249,10 @@ class _DetailButuhPersetujuanScreenState
                                         ),
                                       ],
                                     ),
-                                    ...detailData!['dataProviderBayarUpload'].map<
-                                      TableRow
-                                    >((up) {
-                                      return TableRow(
+                                    ...detailData!['dataProviderBayarUpload']
+                                        .where((up) => up['tahap'] == 2)
+                                        .map<TableRow>((up) {
+                                          return TableRow(
                                         decoration: BoxDecoration(
                                           color: Colors.white,
                                         ),
@@ -1493,18 +1489,31 @@ class _DetailButuhPersetujuanScreenState
                                               st['status']?.toString() ?? '';
                                           final keterangan =
                                               st['keterangan']?.toString() ??
-                                              '';
-                                          if (status.length <= 50 &&
-                                              keterangan.length <= 50) {
+                                              ''; 
+                                          print('status length: ${status.length}, keterangan length: ${keterangan.length}');
+                                           if (status.length <= 25 &&
+                                              keterangan.length <= 25) {
                                             return 108.0;
-                                          } else if (status.length > 50 ||
-                                              keterangan.length > 50) {
+                                            } else if ((status.length > 25 &&
+                                                status.length <= 50) ||
+                                              (keterangan.length > 25 &&
+                                                keterangan.length <= 50)) {
                                             return 148.0;
-                                          } else if (keterangan.length > 100) {
+                                            } else if ((status.length > 50 &&
+                                                status.length <= 100) &&
+                                              keterangan.length < 25) {
+                                            return 132.0;
+                                            } else if ((status.length > 50 &&
+                                                status.length <= 100) ||
+                                              (keterangan.length > 50 &&
+                                                keterangan.length <= 100)) {
+                                            return 148.0;
+                                            } else if (status.length > 100 ||
+                                              keterangan.length > 100) {
                                             return 172.0;
-                                          } else {
-                                            return 108.0;
-                                          }
+                                            } else {
+                                            return 124.0;
+                                            }
                                         })(),
                                         decoration: BoxDecoration(
                                           color: AppStatus.getStatusColor(
@@ -1583,7 +1592,7 @@ class _DetailButuhPersetujuanScreenState
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => SetujuiTransaksiPembelianScreen(
+              builder: (context) => SetujuiTransaksiScreen(
                 pembelianId: widget.pembelianId,
                 userId: widget.userId,
                 barang_jasa: detailData!['model_pembelian']['barang_jasa'],

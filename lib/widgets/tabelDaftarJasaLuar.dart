@@ -112,9 +112,13 @@ class TabelDaftarJasaLuar extends StatelessWidget {
                                 color: Colors.grey,
                               ),
                               const SizedBox(width: 4),
-                              Text(
-                                'Tanggal Diselesaikan: ${entry.value.value['tgl_diselesaikan'] ?? '(not set)'}',
-                                style: const TextStyle(fontSize: 14),
+                              Flexible(
+                                child: Text(
+                                  'Lokasi Penggunaan: ${entry.value.value['lokasi'] ?? '-'}',
+                                  style: const TextStyle(fontSize: 14),
+                                  softWrap: true,
+                                  overflow: TextOverflow.visible,
+                                ),
                               ),
                             ],
                           ),
@@ -262,6 +266,7 @@ class TabelDaftarJasaLuar extends StatelessWidget {
                                     style: const TextStyle(
                                       fontSize: 13,
                                       color: Colors.black,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 );
@@ -283,8 +288,8 @@ class TabelDaftarJasaLuar extends StatelessWidget {
                                   child: const Text(
                                     'Estimasi/Biaya: -',
                                     style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
                                     ),
                                   ),
                                 );

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:validator/screens/konfrimasi_transaksi_pembelian_screen.dart';
+import 'package:validator/screens/success_transaksi_screen.dart';
 import 'package:validator/services/api_service.dart';
 import 'package:validator/utils/appcolors.dart';
 
-class SetujuiTransaksiPembelianScreen extends StatefulWidget {
-  final int pembelianId;
+class KonfirmasiScreen extends StatefulWidget {
+  final int bayarId;
   final int userId;
   final int level;
   final int barang_jasa;
@@ -12,10 +12,11 @@ class SetujuiTransaksiPembelianScreen extends StatefulWidget {
   final String tgl_pengajuan;
   final String divisi;
   final String keterangan;
-  final String total_biaya;
+  final String total_biaya_rekap_pembayaran;
+  final String total_biaya_rekap_pembayaran_datang;
 
-  SetujuiTransaksiPembelianScreen({
-    required this.pembelianId,
+  KonfirmasiScreen({
+    required this.bayarId,
     required this.userId,
     required this.level,
     required this.barang_jasa,
@@ -23,17 +24,16 @@ class SetujuiTransaksiPembelianScreen extends StatefulWidget {
     required this.tgl_pengajuan,
     required this.divisi,
     required this.keterangan,
-    required this.total_biaya,
+    required this.total_biaya_rekap_pembayaran,
+    required this.total_biaya_rekap_pembayaran_datang,
     Key? key,
   }) : super(key: key);
 
   @override
-  _SetujuiTransaksiPembelianScreenState createState() =>
-      _SetujuiTransaksiPembelianScreenState();
+  _KonfirmasiScreenState createState() => _KonfirmasiScreenState();
 }
 
-class _SetujuiTransaksiPembelianScreenState
-    extends State<SetujuiTransaksiPembelianScreen> {
+class _KonfirmasiScreenState extends State<KonfirmasiScreen> {
   final TextEditingController _controller = TextEditingController();
   String? _message;
   Color? _messageColor;
@@ -44,13 +44,20 @@ class _SetujuiTransaksiPembelianScreenState
       _messageColor = null;
     });
 
+    if (action == 2 && _controller.text.trim().isEmpty) {
+      setState(() {
+        _message =
+            "Jelaskan alasan Anda mengembalikan transaksi ini di isian keterangan";
+        _messageColor = Colors.red;
+      });
+      return;
+    }
+
     try {
-      final result = await ApiService.pembelianApproval(
-        pembelianId: widget.pembelianId,
+      final result = await ApiService.barangTibaApproval(
+        bayarId: widget.bayarId,
         userId: widget.userId,
         approve: action, // 1 for approve, 2 for disapprove
-        level: widget.level,
-        status: action == 1 ? widget.level : 99,
         keterangan: _controller.text.trim().isEmpty ? "" : _controller.text,
       );
 
@@ -58,11 +65,11 @@ class _SetujuiTransaksiPembelianScreenState
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => KonfirmasiTransaksiPembelianScreen(
+            builder: (context) => SuccessTransaksiScreen(
               isSuccess: true,
               message: action == 1
-                  ? 'Transaksi berhasil disetujui.'
-                  : 'Transaksi berhasil dikembalikan.',
+                  ? 'Konfirmasi berhasil disetujui.'
+                  : 'Konfirmasi berhasil dikembalikan.',
             ),
           ),
         );
@@ -70,7 +77,7 @@ class _SetujuiTransaksiPembelianScreenState
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => KonfirmasiTransaksiPembelianScreen(
+            builder: (context) => SuccessTransaksiScreen(
               isSuccess: false,
               message: result['message'] ?? 'Terjadi kesalahan.',
             ),
@@ -79,6 +86,7 @@ class _SetujuiTransaksiPembelianScreenState
       }
     } catch (e) {
       setState(() {
+        print(e);
         _message = 'Gagal memproses: $e';
         _messageColor = Colors.red;
       });
@@ -89,10 +97,7 @@ class _SetujuiTransaksiPembelianScreenState
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Persetujuan Transaksi Pembelian',
-          style: TextStyle(fontSize: 14),
-        ),
+        title: const Text('Konfirmasi', style: TextStyle(fontSize: 14)),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh),
@@ -112,7 +117,9 @@ class _SetujuiTransaksiPembelianScreenState
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Persetujuan Transaksi',
+                  widget.barang_jasa == 1
+                      ? 'Konfirmasi Pengecekan Barang Tiba'
+                      : 'Konfirmasi Penyelesaian Jasa Luar',
                   style: TextStyle(color: AppColors.textblack, fontSize: 18),
                 ),
                 SizedBox(height: 16),
@@ -124,9 +131,7 @@ class _SetujuiTransaksiPembelianScreenState
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            widget.barang_jasa == 1
-                                ? 'No PPB (Pembelian Barang)'
-                                : 'No PJL (Jasa Luar)',
+                            widget.barang_jasa == 1 ? 'No PPB' : 'No PJL',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -141,7 +146,7 @@ class _SetujuiTransaksiPembelianScreenState
                         Padding(
                           padding: const EdgeInsets.all(8.0),
                           child: Text(
-                            'Tgl Pengajuan',
+                            'Tanggal Pengajuan',
                             style: TextStyle(fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -192,7 +197,31 @@ class _SetujuiTransaksiPembelianScreenState
                         ),
                         Padding(
                           padding: const EdgeInsets.all(8.0),
-                          child: Text(widget.total_biaya),
+                          child:
+                              widget.total_biaya_rekap_pembayaran ==
+                                  widget.total_biaya_rekap_pembayaran_datang
+                              ? Text(widget.total_biaya_rekap_pembayaran)
+                              : Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      widget.total_biaya_rekap_pembayaran,
+                                      style: const TextStyle(
+                                        decoration: TextDecoration.lineThrough,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      widget
+                                          .total_biaya_rekap_pembayaran_datang,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                         ),
                       ],
                     ),
@@ -228,11 +257,13 @@ class _SetujuiTransaksiPembelianScreenState
                         alignment: Alignment.center,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
+                          children: [
                             Icon(Icons.check_circle, color: AppColors.white),
                             SizedBox(width: 8),
                             Text(
-                              'Setujui Transaksi',
+                              widget.barang_jasa == 1
+                                  ? 'Konfirmasi Pengecekan Barang Tiba'
+                                  : 'Konfirmasi Penyelesaian Jasa Luar',
                               style: TextStyle(
                                 color: AppColors.textwhite,
                                 fontSize: 16,
@@ -254,11 +285,13 @@ class _SetujuiTransaksiPembelianScreenState
                         alignment: Alignment.center,
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
-                          children: const [
+                          children: [
                             Icon(Icons.error, color: AppColors.white),
                             SizedBox(width: 8),
                             Text(
-                              'Kembalikan Transaksi',
+                              widget.barang_jasa == 1
+                                  ? 'Kembalikan Pembelian'
+                                  : 'Kembalikan Penyelesaian Jasa Luar',
                               style: TextStyle(
                                 color: AppColors.textwhite,
                                 fontSize: 16,

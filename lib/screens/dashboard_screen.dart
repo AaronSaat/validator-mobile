@@ -14,6 +14,7 @@ import '../utils/appcolors.dart';
 import 'dart:io';
 import 'package:app_badge_plus/app_badge_plus.dart';
 import 'package:permission_handler/permission_handler.dart' as permission_handler;
+import 'package:validator/services/firebase_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String?
@@ -39,6 +40,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   void initState() {
     super.initState();
 
+    
     allowNotification();
     AppBadgePlus.isSupported().then((value) {
       isSupported = value;
@@ -68,6 +70,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _loadUserInfo();
       }
     });
+
+    _initializeFirebase();
   }
 
   Future<void> _loadUserInfo() async {
@@ -166,6 +170,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
       }
     } else {
       print('This platform is not supported for notification permissions.');
+    }
+  }
+
+   Future<void> _initializeFirebase() async {
+    await FirebaseService.initialize();
+    
+    // Get token dan kirim ke server
+    String? token = await FirebaseService.getToken();
+    if (token != null) {
+      // Kirim token ke server dengan user ID
+      await FirebaseService.sendTokenToServer(token, userId as int);
     }
   }
 

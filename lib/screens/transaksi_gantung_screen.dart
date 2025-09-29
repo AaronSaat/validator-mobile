@@ -387,7 +387,7 @@ class _TransaksiGantungScreenState extends State<TransaksiGantungScreen> {
                           },
                           child: SizedBox(
                             width: MediaQuery.of(context).size.width,
-                            height: MediaQuery.of(context).size.height * 0.46,
+                            height: MediaQuery.of(context).size.height * 0.5,
                             child: Card(
                               margin: const EdgeInsets.symmetric(
                                 horizontal: 16,

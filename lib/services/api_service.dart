@@ -224,7 +224,11 @@ class ApiService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: json.encode({'user_id': userId, 'username': username, 'search': search}),
+      body: json.encode({
+        'user_id': userId,
+        'username': username,
+        'search': search,
+      }),
     );
     if (response.statusCode == 200) {
       return json.decode(response.body);
@@ -250,7 +254,13 @@ class ApiService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: json.encode({'user_id': userId, 'jenis': jenis, 'tgl_pengajuan': tgl_pengajuan, 'tgl_pengajuan_akhir': tgl_pengajuan_akhir, 'search': search}),
+      body: json.encode({
+        'user_id': userId,
+        'jenis': jenis,
+        'tgl_pengajuan': tgl_pengajuan,
+        'tgl_pengajuan_akhir': tgl_pengajuan_akhir,
+        'search': search,
+      }),
     );
     if (response.statusCode == 200) {
       return json.decode(response.body);
@@ -300,12 +310,44 @@ class ApiService {
     );
 
     print('URL: $url');
-    print('Request Body: ${json.encode({'id_bayar': idBayar, 'user_id': userId})}');
+    print(
+      'Request Body: ${json.encode({'id_bayar': idBayar, 'user_id': userId})}',
+    );
     print('Response Status: ${response.statusCode}');
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
       throw Exception('Failed to fetch konfirmasi barang tiba');
+    }
+  }
+
+  static Future<Map<String, dynamic>> barangTibaApproval({
+    required int bayarId,
+    required int userId,
+    required int approve,
+    required String keterangan,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('${baseurl}barang-tiba-approval');
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: json.encode({
+        'id_bayar': bayarId,
+        'user_id': userId,
+        'approve': approve,
+        'keterangan': keterangan,
+      }),
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to fetch barang tiba approval');
     }
   }
 

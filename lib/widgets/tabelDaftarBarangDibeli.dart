@@ -4,7 +4,6 @@ import 'package:intl/intl.dart';
 class TabelDaftarBarangDibeli extends StatelessWidget {
   final String title;
   final Map<String, dynamic> detailData;
-  final Map<String, dynamic>? modelPembelianDetailApproved;
   final Color? backgroundColor;
   final EdgeInsetsGeometry? margin;
   final EdgeInsetsGeometry? padding;
@@ -12,7 +11,6 @@ class TabelDaftarBarangDibeli extends StatelessWidget {
   const TabelDaftarBarangDibeli({
     Key? key,
     required this.detailData,
-    this.modelPembelianDetailApproved,
     this.title = 'Daftar Barang Dibeli',
     this.backgroundColor,
     this.margin,
@@ -31,7 +29,6 @@ class TabelDaftarBarangDibeli extends StatelessWidget {
     }
 
     final entries = detailData.entries.toList();
-    final approvedEntries = modelPembelianDetailApproved?.entries.toList() ?? [];
 
     return Container(
       width: double.infinity,
@@ -95,6 +92,7 @@ class TabelDaftarBarangDibeli extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
                                 Icons.local_offer,
@@ -112,8 +110,8 @@ class TabelDaftarBarangDibeli extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(width: 4),
                           Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
                                 Icons.confirmation_number,
@@ -127,8 +125,8 @@ class TabelDaftarBarangDibeli extends StatelessWidget {
                               ),
                             ],
                           ),
-                          const SizedBox(height: 4),
                           Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
                                 Icons.straighten,
@@ -136,17 +134,15 @@ class TabelDaftarBarangDibeli extends StatelessWidget {
                                 color: Colors.grey,
                               ),
                               const SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
-                                  'Satuan: ${(entries[i].value['satuan'])}',
-                                  style: const TextStyle(fontSize: 14),
-                                  softWrap: true,
-                                  overflow: TextOverflow.visible,
-                                ),
+                              Text(
+                                'Satuan: ${entries[i].value['satuan']}',
+                                style: const TextStyle(fontSize: 14),
                               ),
                             ],
                           ),
+                          const SizedBox(height: 4),
                           Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
                                 Icons.info_outline,
@@ -156,7 +152,7 @@ class TabelDaftarBarangDibeli extends StatelessWidget {
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
-                                  'Tanggal Dibutuhkan: ${(entries[i].value['tanggal_dibutuhkan'] == null || entries[i].value['tanggal_dibutuhkan'].toString().trim().isEmpty) ? '(not set)' : entries[i].value['tanggal_dibutuhkan']}',
+                                  'Tanggal Dibutuhkan: ${(entries[i].value['tgl_dibutuhkan'] == null || entries[i].value['tgl_dibutuhkan'].toString().trim().isEmpty) ? '(not set)' : entries[i].value['tgl_dibutuhkan']}',
                                   style: const TextStyle(fontSize: 14),
                                   softWrap: true,
                                   overflow: TextOverflow.visible,
@@ -165,6 +161,7 @@ class TabelDaftarBarangDibeli extends StatelessWidget {
                             ],
                           ),
                           Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
                                 Icons.info_outline,
@@ -183,6 +180,7 @@ class TabelDaftarBarangDibeli extends StatelessWidget {
                             ],
                           ),
                           Row(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(
                                 Icons.location_on,
@@ -192,7 +190,7 @@ class TabelDaftarBarangDibeli extends StatelessWidget {
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
-                                  'Lokasi Penggunaan: ${(entries[i].value['lokasi'])}',
+                                  'Lokasi Penggunaan: ${entries[i].value['lokasi']}',
                                   style: const TextStyle(fontSize: 14),
                                   softWrap: true,
                                   overflow: TextOverflow.visible,
@@ -200,24 +198,7 @@ class TabelDaftarBarangDibeli extends StatelessWidget {
                               ),
                             ],
                           ),
-                          Row(
-                            children: [
-                              const Icon(
-                                Icons.info_outline,
-                                size: 18,
-                                color: Colors.grey,
-                              ),
-                              const SizedBox(width: 4),
-                              Flexible(
-                                child: Text(
-                                  'Keterangan Item: ${((entries[i].value['keterangan_item']?.toString().toLowerCase() == 'keterangan item') || (entries[i].value['keterangan_item'] == null) || (entries[i].value['keterangan_item'].toString().trim().isEmpty)) ? '-' : entries[i].value['keterangan_item']}',
-                                  style: const TextStyle(fontSize: 14),
-                                  softWrap: true,
-                                  overflow: TextOverflow.visible,
-                                ),
-                              ),
-                            ],
-                          ),
+                          const SizedBox(height: 8),
                           Container(
                             margin: const EdgeInsets.symmetric(vertical: 4),
                             padding: const EdgeInsets.symmetric(
@@ -233,32 +214,51 @@ class TabelDaftarBarangDibeli extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 (() {
-                                  final hargaSatuan = num.tryParse(entries[i].value['estimasi_harga_satuan']?.toString() ?? '0') ?? 0;
-                                  final estimasiHargaSatuan = approvedEntries.length > i
-                                    ? num.tryParse(approvedEntries[i].value['estimasi_harga_satuan']?.toString() ?? '0') ?? 0
-                                    : hargaSatuan;
-
-                                  print('Item ${i + 1}: hargaSatuan=$hargaSatuan, estimasiHargaSatuan=$estimasiHargaSatuan');
+                                  final hargaSatuan =
+                                      num.tryParse(
+                                        entries[i].value['harga_satuan']
+                                                ?.toString() ??
+                                            '0',
+                                      ) ??
+                                      0;
+                                  final estimasiHargaSatuan =
+                                      num.tryParse(
+                                        entries[i]
+                                                .value['estimasi_harga_satuan']
+                                                ?.toString() ??
+                                            '0',
+                                      ) ??
+                                      0;
                                   if (hargaSatuan != estimasiHargaSatuan) {
-                                    return Row(
+                                    return Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
+                                        const Text(
+                                          'Harga Satuan:',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: Colors.black,
+                                          ),
+                                        ),
                                         Text(
-                                          'Harga Satuan: Rp. ${formatCurrency(hargaSatuan)}',
+                                          'Rp. ${formatCurrency(hargaSatuan)}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          'Rp. ${formatCurrency(estimasiHargaSatuan)}',
                                           style: const TextStyle(
                                             fontWeight: FontWeight.w500,
                                             fontSize: 12,
                                             color: Colors.grey,
                                             decoration:
                                                 TextDecoration.lineThrough,
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Text(
-                                          'Rp. ${formatCurrency(estimasiHargaSatuan)}',
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 12,
-                                            color: Colors.black,
                                           ),
                                         ),
                                       ],
@@ -274,15 +274,19 @@ class TabelDaftarBarangDibeli extends StatelessWidget {
                                     );
                                   }
                                 })(),
+                                const SizedBox(height: 2),
                                 Text(
                                   'Total Harga: ${(() {
                                     final jumlah = num.tryParse(entries[i].value['jumlah'].toString()) ?? 0;
                                     final hargaSatuan = num.tryParse(entries[i].value['harga_satuan']?.toString() ?? '0') ?? 0;
-                                    return 'Rp. ${formatCurrency(jumlah * hargaSatuan)}';
+                                    final estimasiHargaSatuan = num.tryParse(entries[i].value['estimasi_harga_satuan']?.toString() ?? '0') ?? 0;
+                                    final harga = hargaSatuan != 0 ? hargaSatuan : estimasiHargaSatuan;
+                                    return 'Rp. ${formatCurrency(jumlah * harga)}';
                                   })()}',
                                   style: const TextStyle(
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.bold,
                                     fontSize: 12,
+                                    color: Colors.black,
                                   ),
                                 ),
                               ],

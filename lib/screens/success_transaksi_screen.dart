@@ -3,11 +3,11 @@ import 'package:validator/utils/appcolors.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
-class KonfirmasiTransaksiPembelianScreen extends StatelessWidget {
+class SuccessTransaksiScreen extends StatelessWidget {
   final bool isSuccess;
   final String message;
 
-  const KonfirmasiTransaksiPembelianScreen({
+  const SuccessTransaksiScreen({
     Key? key,
     required this.isSuccess,
     required this.message,
