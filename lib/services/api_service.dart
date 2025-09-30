@@ -37,7 +37,7 @@ class ApiService {
     } on TimeoutException {
       throw Exception('Request timed out');
     } catch (e) {
-      throw Exception('Unexpected error: $e');
+      throw Exception('$e');
     }
   }
 

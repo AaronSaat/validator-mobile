@@ -21,7 +21,7 @@ dependencies:
   path_provider: ^2.0.0
   flutter_file_downloader: ^2.1.0
   open_file: ^3.5.10
-  fl_chart: ^1.1.0
+  fl_chart: ^0.68.0 #ver 1.1.0: error the method 'translateByDouble' isn't defined for the class 'Matrix4'.
   date_picker_plus: ^3.0.2
   app_badge_plus: ^1.2.3
   permission_handler: ^12.0.1
@@ -47,6 +47,7 @@ flutter:
 
   assets:
     - assets/images/background_login.jpg
+    - assets/images/bg-01.jpg
 
     - assets/cards/red.png
     - assets/cards/yellow.png

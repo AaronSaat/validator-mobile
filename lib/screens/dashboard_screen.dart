@@ -47,7 +47,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // Inisialisasi plugin notifikasi lokal
     const androidInit = AndroidInitializationSettings('@mipmap/ic_launcher');
-    const initSettings = InitializationSettings(android: androidInit);
+    const iosInit = DarwinInitializationSettings();
+    const initSettings = InitializationSettings(
+      android: androidInit,
+      iOS: iosInit,
+    );
     flutterLocalNotificationsPlugin.initialize(initSettings);
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -55,7 +59,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _showLocalNotification(message);
     });
 
-    allowNotification();
+    // allowNotification();
     AppBadgePlus.isSupported().then((value) {
       isSupported = value;
       setState(() {});
@@ -63,13 +67,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // Contoh: update badge dari beforeActionData
     Future.delayed(Duration.zero, () async {
-      // Simulasi ambil data dari API atau state
-      final beforeActionData = {
-        'need_validation': 5,
-      }; // Ganti dengan data asli Anda
-      final badgeCount = beforeActionData['need_validation'] ?? 0;
-      AppBadgePlus.updateBadge(badgeCount);
-      print('AppBadgePlus isSupported: $isSupported, count: $badgeCount');
+      // Ambil data dari API beforeAction
+      if (userId != null && userId!.isNotEmpty) {
+        try {
+          final result = await ApiService.beforeAction(
+            userId: int.parse(userId!),
+          );
+          final data = result['data'] ?? {};
+          final badgeCount =
+              (data['need_validation'] ?? 0) +
+              (data['need_validation_barangtiba'] ?? 0) +
+              (data['transaksi_gantung'] ?? 0);
+          AppBadgePlus.updateBadge(badgeCount);
+          print('AppBadgePlus isSupported: $isSupported, count: $badgeCount');
+        } catch (e) {
+          print('Gagal update badge: $e');
+        }
+      }
     });
 
     // untuk handle multiple pop context karena ada searching
@@ -286,16 +300,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 children: [
                   if (isLoading)
-                    Expanded(
-                      child: Center(
-                        child: LoadingAnimationWidget.beat(
-                          color: Colors.white,
-                          size: 80,
-                        ),
+                    Center(
+                      child: LoadingAnimationWidget.beat(
+                        color: Colors.white,
+                        size: 80,
                       ),
                     )
                   else if (errorMsg != null)
-                    Expanded(child: Center(child: Text(errorMsg!)))
+                    Center(child: Text(errorMsg!))
                   else ...[
                     Padding(
                       padding: const EdgeInsets.symmetric(
@@ -936,59 +948,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       null)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 8.0),
-                                  child: Expanded(
-                                    child: Wrap(
-                                      runSpacing: 4,
-                                      children:
-                                          (siteIndexData['data_rekap']['pengeluaran_per_divisi_bulan_ini']
-                                                  as List)
-                                              .map<Widget>(
-                                                (item) => Padding(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        vertical: 2.0,
-                                                      ),
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Flexible(
-                                                        child: Text(
-                                                          item['divisi']
-                                                                  ?.toString() ??
-                                                              '',
-                                                          style:
-                                                              const TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .normal,
-                                                                fontSize: 14,
-                                                              ),
-                                                          maxLines: 2,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                        ),
-                                                      ),
-                                                      Text(
-                                                        item['total']
+                                  child: Wrap(
+                                    runSpacing: 4,
+                                    children:
+                                        (siteIndexData['data_rekap']['pengeluaran_per_divisi_bulan_ini']
+                                                as List)
+                                            .map<Widget>(
+                                              (item) => Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 2.0,
+                                                    ),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Flexible(
+                                                      child: Text(
+                                                        item['divisi']
                                                                 ?.toString() ??
-                                                            '0',
+                                                            '',
                                                         style: const TextStyle(
                                                           color: Colors.white,
                                                           fontWeight:
-                                                              FontWeight.bold,
+                                                              FontWeight.normal,
                                                           fontSize: 14,
                                                         ),
+                                                        maxLines: 2,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
                                                       ),
-                                                    ],
-                                                  ),
+                                                    ),
+                                                    Text(
+                                                      item['total']
+                                                              ?.toString() ??
+                                                          '0',
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                              )
-                                              .toList(),
-                                    ),
+                                              ),
+                                            )
+                                            .toList(),
                                   ),
                                 ),
                             ],
@@ -1058,59 +1065,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                       null)
                                 Padding(
                                   padding: const EdgeInsets.only(top: 8.0),
-                                  child: Expanded(
-                                    child: Wrap(
-                                      runSpacing: 4,
-                                      children:
-                                          (siteIndexData['data_rekap']['pengeluaran_gantung_per_divisi_bulan_ini']
-                                                  as List)
-                                              .map<Widget>(
-                                                (item) => Padding(
-                                                  padding:
-                                                      const EdgeInsets.symmetric(
-                                                        vertical: 2.0,
-                                                      ),
-                                                  child: Row(
-                                                    mainAxisAlignment:
-                                                        MainAxisAlignment
-                                                            .spaceBetween,
-                                                    children: [
-                                                      Flexible(
-                                                        child: Text(
-                                                          item['divisi']
-                                                                  ?.toString() ??
-                                                              '',
-                                                          style:
-                                                              const TextStyle(
-                                                                color: Colors
-                                                                    .white,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .normal,
-                                                                fontSize: 14,
-                                                              ),
-                                                          maxLines: 2,
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
-                                                        ),
-                                                      ),
-                                                      Text(
-                                                        item['total']
+                                  child: Wrap(
+                                    runSpacing: 4,
+                                    children:
+                                        (siteIndexData['data_rekap']['pengeluaran_gantung_per_divisi_bulan_ini']
+                                                as List)
+                                            .map<Widget>(
+                                              (item) => Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      vertical: 2.0,
+                                                    ),
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
+                                                  children: [
+                                                    Flexible(
+                                                      child: Text(
+                                                        item['divisi']
                                                                 ?.toString() ??
-                                                            '0',
+                                                            '',
                                                         style: const TextStyle(
                                                           color: Colors.white,
                                                           fontWeight:
-                                                              FontWeight.bold,
+                                                              FontWeight.normal,
                                                           fontSize: 14,
                                                         ),
+                                                        maxLines: 2,
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
                                                       ),
-                                                    ],
-                                                  ),
+                                                    ),
+                                                    Text(
+                                                      item['total']
+                                                              ?.toString() ??
+                                                          '0',
+                                                      style: const TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                  ],
                                                 ),
-                                              )
-                                              .toList(),
-                                    ),
+                                              ),
+                                            )
+                                            .toList(),
                                   ),
                                 ),
                             ],
