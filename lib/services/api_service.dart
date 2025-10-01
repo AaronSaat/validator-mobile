@@ -2,6 +2,9 @@
 
 import 'dart:async' show TimeoutException;
 import 'dart:convert';
+import 'dart:io';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -31,6 +34,54 @@ class ApiService {
       } else {
         final error = json.decode(response.body);
         throw Exception(error['message'] ?? 'Login failed');
+      }
+    } on http.ClientException catch (e) {
+      throw Exception('Network error: $e');
+    } on TimeoutException {
+      throw Exception('Request timed out');
+    } catch (e) {
+      throw Exception('$e');
+    }
+  }
+
+  static Future<Map<String, dynamic>> saveUserDevice({
+    required String userId,
+    required String username,
+    required String fcmToken,
+    required String platform,
+    required String deviceModel,
+    required String deviceManufacturer,
+    required String deviceVersion,
+  }) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token') ?? '';
+
+      final url = Uri.parse('${baseurl}save-user-device');
+      final response = await http
+          .post(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+            body: json.encode({
+              'user_id': userId,
+              'username': username,
+              'fcm_token': fcmToken,
+              'platform': platform,
+              'device_model': deviceModel,
+              'device_manufacturer': deviceManufacturer,
+              'device_version': deviceVersion,
+            }),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        final error = json.decode(response.body);
+        throw Exception(error['message'] ?? 'Save user device failed');
       }
     } on http.ClientException catch (e) {
       throw Exception('Network error: $e');

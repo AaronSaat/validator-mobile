@@ -1,21 +1,40 @@
 {
   "project_info": {
-    "project_number": "592674573023",
-    "project_id": "validator-mobile-saat",
-    "storage_bucket": "validator-mobile-saat.firebasestorage.app"
+    "project_number": "928108247385",
+    "project_id": "mobile-apps-saat",
+    "storage_bucket": "mobile-apps-saat.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:592674573023:android:609ea091fccfbe25deb76a",
+        "mobilesdk_app_id": "1:928108247385:android:ed7a54c556ba445bf7b448",
         "android_client_info": {
-          "package_name": "com.example.validator"
+          "package_name": "com.sttsaat.sycapp"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyA7qD4VJ1zPpKt3TuGCiG7-odIBg7TcRXI"
+          "current_key": "AIzaSyDBUOxGyEplJr11OYE6cx7yYA9O3zoXi6Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:928108247385:android:2bf6c6387780c2fff7b448",
+        "android_client_info": {
+          "package_name": "com.sttsaat.validator"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDBUOxGyEplJr11OYE6cx7yYA9O3zoXi6Y"
         }
       ],
       "services": {

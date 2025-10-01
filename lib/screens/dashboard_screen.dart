@@ -1,3 +1,4 @@
+import 'package:device_info_plus/device_info_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -98,6 +99,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _loadUserInfo();
       }
     });
+
+    // Simpan informasi perangkat pengguna jika notifikasi diizinkan
+    _saveUserDevice();
   }
 
   Future<void> _loadUserInfo() async {
@@ -110,12 +114,100 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
     _fetchBeforeAction();
     _fetchSiteIndex();
+    _saveUserDevice();
 
     // untuk handle multiple pop context karena ada searching
     await prefs.setString('proses', '');
     print(
       'SharedPreferences proses setelah loadUserInfo: ${prefs.getString('proses')}',
     );
+  }
+
+  Future<void> _saveUserDevice() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isLoading = true;
+      errorMsg = null;
+    });
+
+    // Cek izin notifikasi terlebih dahulu
+    bool notificationAllowed = false;
+    if (Platform.isAndroid || Platform.isIOS) {
+      final status = await permission_handler.Permission.notification.status;
+      notificationAllowed = status.isGranted;
+    }
+
+    if (!notificationAllowed) {
+      print('save Notifikasi belum diizinkan, tidak menyimpan device.');
+      setState(() {
+        isLoading = false;
+      });
+      return;
+    }
+
+    // Print device info
+    final deviceInfoPlugin = DeviceInfoPlugin();
+    String deviceModelInfo = '';
+    String deviceManufacturerInfo = '';
+    String deviceVersionInfo = '';
+    String platformInfo = '';
+    String fcm_token = '';
+
+    if (Platform.isAndroid) {
+      final androidInfo = await deviceInfoPlugin.androidInfo;
+      deviceModelInfo = androidInfo.model ?? '';
+      deviceManufacturerInfo = androidInfo.manufacturer ?? '';
+      deviceVersionInfo = androidInfo.version.release ?? '';
+      platformInfo = 'Android';
+      print(
+        'Device Info (Android): $deviceModelInfo, $deviceManufacturerInfo, $deviceVersionInfo',
+      );
+    } else if (Platform.isIOS) {
+      final iosInfo = await deviceInfoPlugin.iosInfo;
+      deviceModelInfo = iosInfo.utsname.machine ?? '';
+      deviceManufacturerInfo = iosInfo.name ?? '';
+      deviceVersionInfo = iosInfo.systemVersion ?? '';
+      platformInfo = 'iOS';
+      print(
+        'Device Info (iOS): $deviceModelInfo, $deviceVersionInfo, $deviceManufacturerInfo',
+      );
+    }
+
+    if (Platform.isIOS) {
+      NotificationSettings settings = await FirebaseMessaging.instance
+          .requestPermission(alert: true, badge: true, sound: true);
+      if (settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional) {
+        fcm_token = await FirebaseMessaging.instance.getToken() ?? '';
+        print('FCM Token (Ios): $fcm_token');
+      }
+    } else if (Platform.isAndroid) {
+      fcm_token = await FirebaseMessaging.instance.getToken() ?? '';
+      print('FCM Token (Android): $fcm_token');
+    }
+
+    try {
+      final result = await ApiService.saveUserDevice(
+        userId: prefs.getInt('id')?.toString() ?? '',
+        username: prefs.getString('username') ?? '',
+        fcmToken: fcm_token,
+        platform: platformInfo,
+        deviceModel: deviceModelInfo,
+        deviceManufacturer: deviceManufacturerInfo,
+        deviceVersion: deviceVersionInfo,
+      );
+      setState(() {
+        print('saveUserDevice result: $result');
+      });
+    } catch (e) {
+      setState(() {
+        errorMsg = 'Gagal memuat data: $e';
+      });
+    } finally {
+      setState(() {
+        isLoading = false;
+      });
+    }
   }
 
   Future<void> _fetchBeforeAction() async {

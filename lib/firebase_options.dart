@@ -50,19 +50,20 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyA7qD4VJ1zPpKt3TuGCiG7-odIBg7TcRXI',
-    appId: '1:592674573023:android:609ea091fccfbe25deb76a',
-    messagingSenderId: '592674573023',
-    projectId: 'validator-mobile-saat',
-    storageBucket: 'validator-mobile-saat.firebasestorage.app',
+    apiKey: 'AIzaSyDBUOxGyEplJr11OYE6cx7yYA9O3zoXi6Y',
+    appId: '1:928108247385:android:2bf6c6387780c2fff7b448',
+    messagingSenderId: '928108247385',
+    projectId: 'mobile-apps-saat',
+    storageBucket: 'mobile-apps-saat.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyCfJbewCAfXF3emrXIwYZzLNTNTnzM9lu4',
-    appId: '1:592674573023:ios:b47e4306e33b6fd0deb76a',
-    messagingSenderId: '592674573023',
-    projectId: 'validator-mobile-saat',
-    storageBucket: 'validator-mobile-saat.firebasestorage.app',
+    apiKey: 'AIzaSyCsiRmVtYfS3uNHGBxpO_THRDybNY67ndM',
+    appId: '1:928108247385:ios:b0ebada2093a171ff7b448',
+    messagingSenderId: '928108247385',
+    projectId: 'mobile-apps-saat',
+    storageBucket: 'mobile-apps-saat.firebasestorage.app',
     iosBundleId: 'com.saat.validatorpengadaan',
   );
+
 }

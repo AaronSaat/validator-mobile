@@ -23,12 +23,13 @@ dependencies:
   open_file: ^3.5.10
   fl_chart: ^0.68.0 #ver 1.1.0: error the method 'translateByDouble' isn't defined for the class 'Matrix4'.
   date_picker_plus: ^3.0.2
-  app_badge_plus: ^1.2.3
   permission_handler: ^12.0.1
   flutter_launcher_icons: ^0.14.4
+  app_badge_plus: ^1.2.3
   firebase_core: ^4.1.1
   firebase_messaging: ^16.0.2
   flutter_local_notifications: ^19.4.2
+  device_info_plus: ^12.1.0
 
 dev_dependencies:
   flutter_test:
