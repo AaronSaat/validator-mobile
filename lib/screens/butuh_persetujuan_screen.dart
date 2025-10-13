@@ -9,6 +9,7 @@ import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:validator/utils/appstatus.dart';
 
 import '../utils/appcolors.dart';
+import 'profile_screen.dart';
 
 class ButuhPersetujuanScreen extends StatefulWidget {
   final String search;
@@ -34,6 +35,7 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
 
   Future<void> _loadUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       username = prefs.getString('username') ?? '';
       email = prefs.getString('email') ?? '';
@@ -44,6 +46,7 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
   }
 
   Future<void> _fetchPersetujuan() async {
+    if (!mounted) return;
     setState(() {
       isLoading = true;
       errorMsg = null;
@@ -54,20 +57,24 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
         search: widget.search,
       );
       if (result['success'] == true) {
+        if (!mounted) return;
         setState(() {
           persetujuanList = result['data'] ?? [];
           totalDibutuhkan = result['total_dibutuhkan'] ?? '';
         });
       } else {
+        if (!mounted) return;
         setState(() {
           errorMsg = result['message'] ?? 'Failed to fetch data';
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         errorMsg = e.toString();
       });
     } finally {
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
@@ -100,32 +107,43 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
         ),
         title: Padding(
           padding: const EdgeInsets.only(left: 8.0),
-          child: Container(
-            height: 48,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              shape: BoxShape.rectangle,
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                const SizedBox(width: 16),
-                const Icon(Icons.account_circle, color: Colors.black, size: 32),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    username ?? '',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
+          child: InkWell(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                shape: BoxShape.rectangle,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  const SizedBox(width: 16),
+                  const Icon(
+                    Icons.account_circle,
+                    color: Colors.black,
+                    size: 32,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      username ?? '',
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -135,16 +153,6 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
             tooltip: 'Refresh',
             onPressed: () {
               _fetchPersetujuan();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.black),
-            tooltip: 'Logout',
-            onPressed: () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                (route) => false,
-              );
             },
           ),
         ],
@@ -168,16 +176,14 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
             child: Column(
               children: [
                 if (isLoading)
-                  Expanded(
-                    child: Center(
-                      child: LoadingAnimationWidget.beat(
-                        color: Colors.white,
-                        size: 80,
-                      ),
+                  Center(
+                    child: LoadingAnimationWidget.beat(
+                      color: Colors.white,
+                      size: 80,
                     ),
                   )
                 else if (errorMsg != null)
-                  Expanded(child: Center(child: Text(errorMsg!)))
+                  Center(child: Text(errorMsg!))
                 else ...[
                   if (widget.search != "")
                     Padding(
@@ -433,7 +439,7 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                           },
                           child: SizedBox(
                             width: MediaQuery.of(context).size.width,
-                            height: MediaQuery.of(context).size.height * 0.22,
+                            height: MediaQuery.of(context).size.height * 0.27,
                             child: Card(
                               margin: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -492,7 +498,7 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                         Text(
+                                          Text(
                                             // ignore: prefer_interpolation_to_compose_strings
                                             '${index + 1}. ' +
                                                 (item['barang_jasa'] == 1
@@ -542,6 +548,49 @@ class _ButuhPersetujuanScreenState extends State<ButuhPersetujuanScreen> {
                                               fontWeight: FontWeight.bold,
                                             ),
                                           ),
+                                          const SizedBox(height: 8),
+                                          if (item['branch'] == 1)
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 4,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.green,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: const Text(
+                                                'Branch: STT SAAT',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            )
+                                          else if (item['branch'] == 2)
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 4,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.red,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: const Text(
+                                                'Branch: Yayasan SAAT',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ),
                                         ],
                                       ),
                                     ),

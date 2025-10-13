@@ -15,6 +15,7 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   bool _obscureText = true;
+  bool _isLoading = false;
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final FocusNode _usernameFocusNode = FocusNode();
@@ -24,6 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _login() async {
     setState(() {
       _errorMessage = null;
+      _isLoading = true;
     });
     try {
       final result = await ApiService.checkUser(
@@ -51,6 +53,10 @@ class _LoginScreenState extends State<LoginScreen> {
         };
         print('LOGIN DATA: ' + dataToPrint.toString());
 
+        setState(() {
+          _isLoading = false;
+        });
+
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
             builder: (context) => const DashboardScreen(fromScreen: "login"),
@@ -58,13 +64,14 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       } else {
         setState(() {
-          // _errorMessage = result['message'] ?? 'Username atau password salah';
           _errorMessage = 'Username atau password salah';
+          _isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
         _errorMessage = e.toString();
+        _isLoading = false;
       });
     }
   }
@@ -220,30 +227,49 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ],
                             const SizedBox(height: 24),
-                            SizedBox(
-                              height: 48,
-                              width: MediaQuery.of(context).size.width * 0.3,
-                              child: ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.orange,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16,
+                            _isLoading
+                                ? Container(
+                                    height: 48,
+                                    width:
+                                        MediaQuery.of(context).size.width * 0.3,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.greyLight,
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    alignment: Alignment.center,
+                                    child: const CircularProgressIndicator(
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.white,
+                                      ),
+                                    ),
+                                  )
+                                : SizedBox(
+                                    height: 48,
+                                    width:
+                                        MediaQuery.of(context).size.width * 0.3,
+                                    child: ElevatedButton(
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: AppColors.orange,
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                        ),
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
+                                        ),
+                                      ),
+                                      onPressed: _login,
+                                      child: const Text(
+                                        'Login',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.textwhite,
+                                        ),
+                                      ),
+                                    ),
                                   ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                ),
-                                onPressed: _login,
-                                child: const Text(
-                                  'Login',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.textwhite,
-                                  ),
-                                ),
-                              ),
-                            ),
                             const SizedBox(height: 12),
                           ],
                         ),

@@ -13,7 +13,6 @@ import 'package:flutter_pdfview/flutter_pdfview.dart';
 import 'package:dio/dio.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
-import 'package:flutter_file_downloader/flutter_file_downloader.dart';
 import 'package:open_file/open_file.dart';
 
 class DetailButuhPersetujuanScreen extends StatefulWidget {
@@ -55,9 +54,12 @@ class _DetailButuhPersetujuanScreenState
       );
       setState(() {
         detailData = result;
+        print('Detail Data: $detailData');
+        print('dataProviderUpload: ${detailData?['dataProviderUpload']}');
       });
     } catch (e) {
       setState(() {
+        print('Navigating Error fetching detail: $e');
         errorMsg = e.toString();
       });
     } finally {
@@ -284,12 +286,10 @@ class _DetailButuhPersetujuanScreenState
             color: AppColors.baseBackground,
           ),
           isLoading
-              ? Expanded(
-                  child: Center(
-                    child: LoadingAnimationWidget.beat(
-                      color: Colors.white,
-                      size: 80,
-                    ),
+              ? Center(
+                  child: LoadingAnimationWidget.beat(
+                    color: Colors.white,
+                    size: 80,
                   ),
                 )
               : errorMsg != null
@@ -580,6 +580,32 @@ class _DetailButuhPersetujuanScreenState
                                         color: AppColors.textwhite,
                                         fontWeight: FontWeight.bold,
                                       ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              TableRow(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      'Branch',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      detailData!['model_pembelian']['branch'] ==
+                                              1
+                                          ? 'STT SAAT'
+                                          : detailData!['model_pembelian']['branch'] ==
+                                                2
+                                          ? 'Yayasan SAAT'
+                                          : '-',
+                                      style: const TextStyle(fontSize: 12),
                                     ),
                                   ),
                                 ],
@@ -1155,7 +1181,8 @@ class _DetailButuhPersetujuanScreenState
                       // Data Provider Bayar Upload
                       if (detailData?['dataProviderBayarUpload'] != null &&
                           detailData!['dataProviderBayarUpload'] is List &&
-                          detailData!['dataProviderBayarUpload'].isNotEmpty) ...[
+                          detailData!['dataProviderBayarUpload']
+                              .isNotEmpty) ...[
                         Container(
                           margin: const EdgeInsets.symmetric(vertical: 6.0),
                           padding: const EdgeInsets.only(top: 10.0),
@@ -1253,177 +1280,186 @@ class _DetailButuhPersetujuanScreenState
                                         .where((up) => up['tahap'] == 2)
                                         .map<TableRow>((up) {
                                           return TableRow(
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                        ),
-                                        children: [
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Text(
-                                              // Ambil nama file di belakang dan ubah %20 jadi spasi
-                                              (() {
-                                                final fullPath =
-                                                    up['nama_file'] ?? '-';
-                                                if (fullPath == '-' ||
-                                                    fullPath == null) {
-                                                  return '-';
-                                                }
-                                                final fileName = fullPath
-                                                    .split('/')
-                                                    .last
-                                                    .replaceAll('%20', ' ');
-                                                return fileName;
-                                              })(),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
                                             ),
-                                          ),
-                                          Padding(
-                                            padding: const EdgeInsets.all(8.0),
-                                            child: Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  '${up['keterangan'] ?? '-'}',
-                                                  style: const TextStyle(
-                                                    fontWeight: FontWeight.bold,
-                                                    fontSize: 14,
-                                                  ),
+                                            children: [
+                                              Padding(
+                                                padding: const EdgeInsets.all(
+                                                  8.0,
                                                 ),
-                                                if (up['upload_by'] != null)
-                                                  Text(
-                                                    'Upload oleh: ${up['upload_by']}',
-                                                    style: const TextStyle(
-                                                      fontSize: 12,
-                                                    ),
-                                                  ),
-                                                if (up['created_at'] != null)
-                                                  Padding(
-                                                    padding:
-                                                        const EdgeInsets.only(
-                                                          top: 4,
-                                                        ),
-                                                    child: Text(
-                                                      '${up['created_at']}',
+                                                child: Text(
+                                                  // Ambil nama file di belakang dan ubah %20 jadi spasi
+                                                  (() {
+                                                    final fullPath =
+                                                        up['nama_file'] ?? '-';
+                                                    if (fullPath == '-' ||
+                                                        fullPath == null) {
+                                                      return '-';
+                                                    }
+                                                    final fileName = fullPath
+                                                        .split('/')
+                                                        .last
+                                                        .replaceAll('%20', ' ');
+                                                    return fileName;
+                                                  })(),
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding: const EdgeInsets.all(
+                                                  8.0,
+                                                ),
+                                                child: Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Text(
+                                                      '${up['keterangan'] ?? '-'}',
                                                       style: const TextStyle(
-                                                        fontStyle:
-                                                            FontStyle.italic,
-                                                        fontSize: 12,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 14,
+                                                      ),
+                                                    ),
+                                                    if (up['upload_by'] != null)
+                                                      Text(
+                                                        'Upload oleh: ${up['upload_by']}',
+                                                        style: const TextStyle(
+                                                          fontSize: 12,
+                                                        ),
+                                                      ),
+                                                    if (up['created_at'] !=
+                                                        null)
+                                                      Padding(
+                                                        padding:
+                                                            const EdgeInsets.only(
+                                                              top: 4,
+                                                            ),
+                                                        child: Text(
+                                                          '${up['created_at']}',
+                                                          style:
+                                                              const TextStyle(
+                                                                fontStyle:
+                                                                    FontStyle
+                                                                        .italic,
+                                                                fontSize: 12,
+                                                              ),
+                                                        ),
+                                                      ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Column(
+                                                children: [
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      final fileName =
+                                                          up['nama_file']
+                                                              ?.toString() ??
+                                                          '';
+                                                      print(
+                                                        '${GlobalVariables.imageUrl}$fileName',
+                                                      );
+                                                      if (fileName
+                                                          .toLowerCase()
+                                                          .endsWith('.pdf')) {
+                                                        pdfViewer(
+                                                          context,
+                                                          '${GlobalVariables.imageUrl}$fileName',
+                                                        );
+                                                      } else {
+                                                        imageViewer(
+                                                          context,
+                                                          '${GlobalVariables.imageUrl}$fileName',
+                                                        );
+                                                      }
+                                                    },
+                                                    child: Container(
+                                                      height: 48,
+                                                      decoration: BoxDecoration(
+                                                        color: AppColors.orange
+                                                            .withAlpha(50),
+                                                      ),
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets.all(
+                                                              8.0,
+                                                            ),
+                                                        child: Row(
+                                                          children: [
+                                                            const Icon(
+                                                              Icons.visibility,
+                                                              size: 16,
+                                                            ),
+                                                            const SizedBox(
+                                                              width: 4,
+                                                            ),
+                                                            const Text(
+                                                              'View',
+                                                              style: TextStyle(
+                                                                fontSize: 12,
+                                                                color: AppColors
+                                                                    .orange,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
-                                              ],
-                                            ),
-                                          ),
-                                          Column(
-                                            children: [
-                                              GestureDetector(
-                                                onTap: () {
-                                                  final fileName =
-                                                      up['nama_file']
-                                                          ?.toString() ??
-                                                      '';
-                                                  print(
-                                                    '${GlobalVariables.imageUrl}$fileName',
-                                                  );
-                                                  if (fileName
-                                                      .toLowerCase()
-                                                      .endsWith('.pdf')) {
-                                                    pdfViewer(
-                                                      context,
-                                                      '${GlobalVariables.imageUrl}$fileName',
-                                                    );
-                                                  } else {
-                                                    imageViewer(
-                                                      context,
-                                                      '${GlobalVariables.imageUrl}$fileName',
-                                                    );
-                                                  }
-                                                },
-                                                child: Container(
-                                                  height: 48,
-                                                  decoration: BoxDecoration(
-                                                    color: AppColors.orange
-                                                        .withAlpha(50),
+                                                  Container(
+                                                    height: 2,
+                                                    color: AppColors.greyLight,
                                                   ),
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                          8.0,
+                                                  GestureDetector(
+                                                    onTap: () {
+                                                      downloadFile(
+                                                        '${GlobalVariables.imageUrl}${up['nama_file'] ?? ''}',
+                                                      );
+                                                    },
+                                                    child: Container(
+                                                      height: 48,
+                                                      decoration: BoxDecoration(
+                                                        color: AppColors.orange
+                                                            .withAlpha(50),
+                                                      ),
+                                                      child: Padding(
+                                                        padding:
+                                                            const EdgeInsets.all(
+                                                              8.0,
+                                                            ),
+                                                        child: Row(
+                                                          children: [
+                                                            const Icon(
+                                                              Icons.download,
+                                                              size: 16,
+                                                            ),
+                                                            const SizedBox(
+                                                              width: 4,
+                                                            ),
+                                                            const Text(
+                                                              'Download',
+                                                              style: TextStyle(
+                                                                fontSize: 8,
+                                                                color: AppColors
+                                                                    .orange,
+                                                              ),
+                                                            ),
+                                                          ],
                                                         ),
-                                                    child: Row(
-                                                      children: [
-                                                        const Icon(
-                                                          Icons.visibility,
-                                                          size: 16,
-                                                        ),
-                                                        const SizedBox(
-                                                          width: 4,
-                                                        ),
-                                                        const Text(
-                                                          'View',
-                                                          style: TextStyle(
-                                                            fontSize: 12,
-                                                            color: AppColors
-                                                                .orange,
-                                                          ),
-                                                        ),
-                                                      ],
+                                                      ),
                                                     ),
                                                   ),
-                                                ),
-                                              ),
-                                              Container(
-                                                height: 2,
-                                                color: AppColors.greyLight,
-                                              ),
-                                              GestureDetector(
-                                                onTap: () {
-                                                  downloadFile(
-                                                    '${GlobalVariables.imageUrl}${up['nama_file'] ?? ''}',
-                                                  );
-                                                },
-                                                child: Container(
-                                                  height: 48,
-                                                  decoration: BoxDecoration(
-                                                    color: AppColors.orange
-                                                        .withAlpha(50),
+                                                  Container(
+                                                    height: 2,
+                                                    color: AppColors.greyLight,
                                                   ),
-                                                  child: Padding(
-                                                    padding:
-                                                        const EdgeInsets.all(
-                                                          8.0,
-                                                        ),
-                                                    child: Row(
-                                                      children: [
-                                                        const Icon(
-                                                          Icons.download,
-                                                          size: 16,
-                                                        ),
-                                                        const SizedBox(
-                                                          width: 4,
-                                                        ),
-                                                        const Text(
-                                                          'Download',
-                                                          style: TextStyle(
-                                                            fontSize: 8,
-                                                            color: AppColors
-                                                                .orange,
-                                                          ),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                              Container(
-                                                height: 2,
-                                                color: AppColors.greyLight,
+                                                ],
                                               ),
                                             ],
-                                          ),
-                                        ],
-                                      );
-                                    }).toList(),
+                                          );
+                                        })
+                                        .toList(),
                                   ],
                                 ),
                               ),
@@ -1489,31 +1525,30 @@ class _DetailButuhPersetujuanScreenState
                                               st['status']?.toString() ?? '';
                                           final keterangan =
                                               st['keterangan']?.toString() ??
-                                              ''; 
-                                          print('status length: ${status.length}, keterangan length: ${keterangan.length}');
-                                           if (status.length <= 25 &&
+                                              '';
+                                          if (status.length <= 25 &&
                                               keterangan.length <= 25) {
                                             return 108.0;
-                                            } else if ((status.length > 25 &&
-                                                status.length <= 50) ||
+                                          } else if ((status.length > 25 &&
+                                                  status.length <= 50) ||
                                               (keterangan.length > 25 &&
-                                                keterangan.length <= 50)) {
+                                                  keterangan.length <= 50)) {
                                             return 148.0;
-                                            } else if ((status.length > 50 &&
-                                                status.length <= 100) &&
+                                          } else if ((status.length > 50 &&
+                                                  status.length <= 100) &&
                                               keterangan.length < 25) {
                                             return 132.0;
-                                            } else if ((status.length > 50 &&
-                                                status.length <= 100) ||
+                                          } else if ((status.length > 50 &&
+                                                  status.length <= 100) ||
                                               (keterangan.length > 50 &&
-                                                keterangan.length <= 100)) {
+                                                  keterangan.length <= 100)) {
                                             return 148.0;
-                                            } else if (status.length > 100 ||
+                                          } else if (status.length > 100 ||
                                               keterangan.length > 100) {
                                             return 172.0;
-                                            } else {
+                                          } else {
                                             return 124.0;
-                                            }
+                                          }
                                         })(),
                                         decoration: BoxDecoration(
                                           color: AppStatus.getStatusColor(
@@ -1599,6 +1634,8 @@ class _DetailButuhPersetujuanScreenState
                 no_ppb: detailData!['model_pembelian']['no_ppb'],
                 tgl_pengajuan: detailData!['model_pembelian']['tgl_pengajuan'],
                 level: detailData!['level'],
+                branch: detailData!['model_pembelian']['branch'],
+                id_divisi: detailData!['model_pembelian']['id_divisi'],
                 divisi: detailData!['model_pembelian']['nama_divisi'],
                 keterangan:
                     (detailData!['model_pembelian']['keterangan']

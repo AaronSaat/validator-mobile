@@ -15,6 +15,44 @@ class ApiService {
   static const String baseurl = GlobalVariables.baseApiUrl;
   // static const String baseurl = 'https://netunim.seabs.ac.id/api-syc2025/';
 
+  static Future<Map<String, dynamic>> validateUser() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token') ?? '';
+      if (token.isEmpty) {
+        throw Exception('Token not found');
+      }
+      final url = Uri.parse('${baseurl}validate-user');
+      final response = await http
+          .get(
+            url,
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
+
+      print('URL: $url');
+      print('Response Status: ${response.statusCode}');
+      print('Response Body: ${response.body}');
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data;
+      } else {
+        final error = json.decode(response.body);
+        throw Exception(error['message'] ?? 'User validation failed');
+      }
+    } on http.ClientException catch (e) {
+      throw Exception('Network error: $e');
+    } on TimeoutException {
+      throw Exception('Request timed out');
+    } catch (e) {
+      print('Error: $e');
+      throw Exception('$e');
+    }
+  }
+
   static Future<Map<String, dynamic>> checkUser(
     String username,
     String password,
@@ -29,6 +67,12 @@ class ApiService {
           )
           .timeout(const Duration(seconds: 10));
 
+      print('URL: $url');
+      print(
+        'Request Body: ${json.encode({'username': username, 'password': password})}',
+      );
+      print('Response Status: ${response.statusCode}');
+      print('Response Body: ${response.body}');
       if (response.statusCode == 200) {
         return json.decode(response.body);
       } else {
@@ -40,6 +84,7 @@ class ApiService {
     } on TimeoutException {
       throw Exception('Request timed out');
     } catch (e) {
+      print('Error: $e');
       throw Exception('$e');
     }
   }
@@ -53,42 +98,128 @@ class ApiService {
     required String deviceManufacturer,
     required String deviceVersion,
   }) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('token') ?? '';
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
 
-      final url = Uri.parse('${baseurl}save-user-device');
-      final response = await http
-          .post(
-            url,
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-            body: json.encode({
-              'user_id': userId,
-              'username': username,
-              'fcm_token': fcmToken,
-              'platform': platform,
-              'device_model': deviceModel,
-              'device_manufacturer': deviceManufacturer,
-              'device_version': deviceVersion,
-            }),
-          )
-          .timeout(const Duration(seconds: 10));
+    final url = Uri.parse('${baseurl}save-user-device');
+    final response = await http
+        .post(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: json.encode({
+            'user_id': userId,
+            'username': username,
+            'fcm_token': fcmToken,
+            'platform': platform,
+            'device_model': deviceModel,
+            'device_manufacturer': deviceManufacturer,
+            'device_version': deviceVersion,
+          }),
+        )
+        .timeout(const Duration(seconds: 10));
 
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        final error = json.decode(response.body);
-        throw Exception(error['message'] ?? 'Save user device failed');
-      }
-    } on http.ClientException catch (e) {
-      throw Exception('Network error: $e');
-    } on TimeoutException {
-      throw Exception('Request timed out');
-    } catch (e) {
-      throw Exception('$e');
+    print(
+      'Request Body: ${json.encode({'user_id': userId, 'username': username, 'fcm_token': fcmToken, 'platform': platform, 'device_model': deviceModel, 'device_manufacturer': deviceManufacturer, 'device_version': deviceVersion})}',
+    );
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      final error = json.decode(response.body);
+      throw Exception(error['message'] ?? 'Save user device failed');
+    }
+  }
+
+  static Future<Map<String, dynamic>> deleteUserDevice({
+    required String fcmToken,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('${baseurl}delete-user-device');
+    final response = await http
+        .post(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: json.encode({'fcm_token': fcmToken}),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    print('Request Body: ${json.encode({'fcm_token': fcmToken})}');
+    print('Response Status: ${response.statusCode}');
+    print('Response Body: ${response.body}');
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      final error = json.decode(response.body);
+      throw Exception(error['message'] ?? 'Delete user device failed');
+    }
+  }
+
+  static Future<Map<String, dynamic>> getNotificationSetting({
+    required String fcmToken,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('${baseurl}get-notification-setting');
+    final response = await http
+        .post(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: json.encode({'fcm_token': fcmToken}),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    print('url: $url');
+    print('Response Status: ${response.statusCode}');
+    print('Response Body: ${response.body}');
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      final error = json.decode(response.body);
+      throw Exception(error['message'] ?? 'Get notification setting failed');
+    }
+  }
+
+  static Future<Map<String, dynamic>> saveNotificationSetting({
+    required int userId,
+    required int allowed,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('${baseurl}save-notification-setting');
+    final response = await http
+        .post(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: json.encode({'user_id': userId, 'allowed': allowed}),
+        )
+        .timeout(const Duration(seconds: 10));
+
+    print('url: $url');
+    print(
+      'Request Body: ${json.encode({'user_id': userId, 'allowed': allowed})}',
+    );
+    print('Response Status: ${response.statusCode}');
+    print('Response Body: ${response.body}');
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      final error = json.decode(response.body);
+      throw Exception(error['message'] ?? 'Save notification setting failed');
     }
   }
 
@@ -164,6 +295,8 @@ class ApiService {
     required int approve,
     required int level,
     required int status,
+    required int idDivisi,
+    required int branch,
     required String keterangan,
   }) async {
     final prefs = await SharedPreferences.getInstance();
@@ -182,9 +315,17 @@ class ApiService {
         'approve': approve,
         'level': level,
         'status': status,
+        'branch': branch,
+        'id_divisi': idDivisi,
         'keterangan': keterangan,
       }),
     );
+
+    print('URL: $url');
+    print(
+      'Request Body: ${json.encode({'id_pembelian': pembelianId, 'user_id': userId, 'approve': approve, 'level': level, 'status': status, 'branch': branch, 'id_divisi': idDivisi, 'keterangan': keterangan})}',
+    );
+    print('response body: ${response.body}');
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
@@ -313,6 +454,12 @@ class ApiService {
         'search': search,
       }),
     );
+
+    print('URL: $url');
+    print(
+      'Request Body: ${json.encode({'user_id': userId, 'jenis': jenis, 'tgl_pengajuan': tgl_pengajuan, 'tgl_pengajuan_akhir': tgl_pengajuan_akhir, 'search': search})}',
+    );
+    print('Response Status: ${response.statusCode}');
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
@@ -376,6 +523,8 @@ class ApiService {
     required int bayarId,
     required int userId,
     required int approve,
+    required int idDivisi,
+    required int branch,
     required String keterangan,
   }) async {
     final prefs = await SharedPreferences.getInstance();
@@ -392,9 +541,14 @@ class ApiService {
         'id_bayar': bayarId,
         'user_id': userId,
         'approve': approve,
+        'id_divisi': idDivisi,
+        'branch': branch,
         'keterangan': keterangan,
       }),
     );
+
+    print('URL: $url');
+    print('response body: ${response.body}');
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {

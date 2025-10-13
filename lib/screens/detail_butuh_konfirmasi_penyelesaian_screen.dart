@@ -17,23 +17,22 @@ import 'dart:io';
 import 'package:flutter_file_downloader/flutter_file_downloader.dart';
 import 'package:open_file/open_file.dart';
 
-class DetailButuhKonfrimasiPenyelesaianScreen extends StatefulWidget {
+class DetailButuhKonfirmasiPenyelesaianScreen extends StatefulWidget {
   final int bayarId;
   final int userId;
 
-  const DetailButuhKonfrimasiPenyelesaianScreen({
+  const DetailButuhKonfirmasiPenyelesaianScreen({
     Key? key,
     required this.bayarId,
     required this.userId,
   }) : super(key: key);
-
   @override
-  State<DetailButuhKonfrimasiPenyelesaianScreen> createState() =>
-      _DetailButuhKonfrimasiPenyelesaianScreenState();
+  State<DetailButuhKonfirmasiPenyelesaianScreen> createState() =>
+      _DetailButuhKonfirmasiPenyelesaianScreenState();
 }
 
-class _DetailButuhKonfrimasiPenyelesaianScreenState
-    extends State<DetailButuhKonfrimasiPenyelesaianScreen> {
+class _DetailButuhKonfirmasiPenyelesaianScreenState
+    extends State<DetailButuhKonfirmasiPenyelesaianScreen> {
   Map<String, dynamic>? detailData;
   bool isLoading = true;
   String? errorMsg;
@@ -45,6 +44,7 @@ class _DetailButuhKonfrimasiPenyelesaianScreenState
   }
 
   Future<void> _fetchDetail() async {
+    if (!mounted) return;
     setState(() {
       isLoading = true;
       errorMsg = null;
@@ -54,14 +54,17 @@ class _DetailButuhKonfrimasiPenyelesaianScreenState
         idBayar: widget.bayarId.toString(),
         userId: widget.userId.toString(),
       );
+      if (!mounted) return;
       setState(() {
         detailData = result;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         errorMsg = e.toString();
       });
     } finally {
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
@@ -285,12 +288,10 @@ class _DetailButuhKonfrimasiPenyelesaianScreenState
             color: AppColors.baseBackground,
           ),
           isLoading
-              ? Expanded(
-                  child: Center(
-                    child: LoadingAnimationWidget.beat(
-                      color: Colors.white,
-                      size: 80,
-                    ),
+              ? Center(
+                  child: LoadingAnimationWidget.beat(
+                    color: Colors.white,
+                    size: 80,
                   ),
                 )
               : errorMsg != null
@@ -504,6 +505,32 @@ class _DetailButuhKonfrimasiPenyelesaianScreenState
                                         color: AppColors.textwhite,
                                         fontWeight: FontWeight.bold,
                                       ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              TableRow(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      'Branch',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      detailData!['model_pembelian']['branch'] ==
+                                              1
+                                          ? 'STT SAAT'
+                                          : detailData!['model_pembelian']['branch'] ==
+                                                2
+                                          ? 'Yayasan SAAT'
+                                          : '-',
+                                      style: const TextStyle(fontSize: 12),
                                     ),
                                   ),
                                 ],
@@ -1457,30 +1484,32 @@ class _DetailButuhKonfrimasiPenyelesaianScreenState
                                           final keterangan =
                                               st['keterangan']?.toString() ??
                                               '';
-                                              print('status length: ${status.length}, keterangan length: ${keterangan.length}');
-                                           if (status.length <= 25 &&
+                                          print(
+                                            'status length: ${status.length}, keterangan length: ${keterangan.length}',
+                                          );
+                                          if (status.length <= 25 &&
                                               keterangan.length <= 25) {
                                             return 108.0;
-                                            } else if ((status.length > 25 &&
-                                                status.length <= 50) ||
+                                          } else if ((status.length > 25 &&
+                                                  status.length <= 50) ||
                                               (keterangan.length > 25 &&
-                                                keterangan.length <= 50)) {
+                                                  keterangan.length <= 50)) {
                                             return 148.0;
-                                            } else if ((status.length > 50 &&
-                                                status.length <= 100) &&
+                                          } else if ((status.length > 50 &&
+                                                  status.length <= 100) &&
                                               keterangan.length < 25) {
                                             return 132.0;
-                                            } else if ((status.length > 50 &&
-                                                status.length <= 100) ||
+                                          } else if ((status.length > 50 &&
+                                                  status.length <= 100) ||
                                               (keterangan.length > 50 &&
-                                                keterangan.length <= 100)) {
+                                                  keterangan.length <= 100)) {
                                             return 148.0;
-                                            } else if (status.length > 100 ||
+                                          } else if (status.length > 100 ||
                                               keterangan.length > 100) {
                                             return 172.0;
-                                            } else {
+                                          } else {
                                             return 124.0;
-                                            }
+                                          }
                                         })(),
                                         decoration: BoxDecoration(
                                           color: AppStatus.getStatusColor(
@@ -1567,6 +1596,8 @@ class _DetailButuhKonfrimasiPenyelesaianScreenState
                 tgl_pengajuan: detailData!['model_pembelian']['tgl_pengajuan'],
                 level: 1,
                 divisi: detailData!['model_pembelian']['nama_divisi'],
+                branch: detailData!['model_pembelian']['branch'],
+                id_divisi: detailData!['model_pembelian']['id_divisi'],
                 keterangan:
                     (detailData!['model_pembelian']['keterangan']
                             ?.toString()

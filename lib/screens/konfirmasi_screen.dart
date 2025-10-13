@@ -11,6 +11,8 @@ class KonfirmasiScreen extends StatefulWidget {
   final String no_ppb;
   final String tgl_pengajuan;
   final String divisi;
+  final int branch;
+  final int id_divisi;
   final String keterangan;
   final String total_biaya_rekap_pembayaran;
   final String total_biaya_rekap_pembayaran_datang;
@@ -23,6 +25,8 @@ class KonfirmasiScreen extends StatefulWidget {
     required this.no_ppb,
     required this.tgl_pengajuan,
     required this.divisi,
+    required this.branch,
+    required this.id_divisi,
     required this.keterangan,
     required this.total_biaya_rekap_pembayaran,
     required this.total_biaya_rekap_pembayaran_datang,
@@ -37,11 +41,14 @@ class _KonfirmasiScreenState extends State<KonfirmasiScreen> {
   final TextEditingController _controller = TextEditingController();
   String? _message;
   Color? _messageColor;
+  bool isLoading = false;
 
   Future<void> _handleApproval(int action) async {
+    if (isLoading) return;
     setState(() {
       _message = null;
       _messageColor = null;
+      isLoading = true;
     });
 
     if (action == 2 && _controller.text.trim().isEmpty) {
@@ -49,8 +56,12 @@ class _KonfirmasiScreenState extends State<KonfirmasiScreen> {
         _message =
             "Jelaskan alasan Anda mengembalikan transaksi ini di isian keterangan";
         _messageColor = Colors.red;
+        isLoading = false;
       });
       return;
+    }
+    if (action == 1 && _controller.text.trim().isEmpty) {
+      _controller.text = "Menyetujui";
     }
 
     try {
@@ -58,9 +69,14 @@ class _KonfirmasiScreenState extends State<KonfirmasiScreen> {
         bayarId: widget.bayarId,
         userId: widget.userId,
         approve: action, // 1 for approve, 2 for disapprove
+        idDivisi: widget.id_divisi,
+        branch: widget.branch,
         keterangan: _controller.text.trim().isEmpty ? "" : _controller.text,
       );
 
+      setState(() {
+        isLoading = false;
+      });
       if (result['success'] == true) {
         Navigator.push(
           context,
@@ -89,6 +105,7 @@ class _KonfirmasiScreenState extends State<KonfirmasiScreen> {
         print(e);
         _message = 'Gagal memproses: $e';
         _messageColor = Colors.red;
+        isLoading = false;
       });
     }
   }
@@ -246,61 +263,87 @@ class _KonfirmasiScreenState extends State<KonfirmasiScreen> {
                 SizedBox(height: 16),
                 Column(
                   children: [
-                    GestureDetector(
-                      onTap: () => _handleApproval(1),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: AppColors.success,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        alignment: Alignment.center,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.check_circle, color: AppColors.white),
-                            SizedBox(width: 8),
-                            Text(
-                              widget.barang_jasa == 1
-                                  ? 'Konfirmasi Pengecekan Barang Tiba'
-                                  : 'Konfirmasi Penyelesaian Jasa Luar',
-                              style: TextStyle(
-                                color: AppColors.textwhite,
-                                fontSize: 16,
+                    isLoading
+                        ? Container(
+                            width: double.infinity,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: AppColors.greyLight,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            alignment: Alignment.center,
+                            child: const CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 16),
-                    GestureDetector(
-                      onTap: () => _handleApproval(2),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        decoration: BoxDecoration(
-                          color: AppColors.error,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        alignment: Alignment.center,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.error, color: AppColors.white),
-                            SizedBox(width: 8),
-                            Text(
-                              widget.barang_jasa == 1
-                                  ? 'Kembalikan Pembelian'
-                                  : 'Kembalikan Penyelesaian Jasa Luar',
-                              style: TextStyle(
-                                color: AppColors.textwhite,
-                                fontSize: 16,
+                          )
+                        : Column(
+                            children: [
+                              GestureDetector(
+                                onTap: () => _handleApproval(1),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.success,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(
+                                        Icons.check_circle,
+                                        color: AppColors.white,
+                                      ),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        widget.barang_jasa == 1
+                                            ? 'Konfirmasi Pengecekan Barang Tiba'
+                                            : 'Konfirmasi Penyelesaian Jasa Luar',
+                                        style: TextStyle(
+                                          color: AppColors.textwhite,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                              SizedBox(height: 16),
+                              GestureDetector(
+                                onTap: () => _handleApproval(2),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.error,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.error, color: AppColors.white),
+                                      SizedBox(width: 8),
+                                      Text(
+                                        widget.barang_jasa == 1
+                                            ? 'Kembalikan Pembelian'
+                                            : 'Kembalikan Penyelesaian Jasa Luar',
+                                        style: TextStyle(
+                                          color: AppColors.textwhite,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                   ],
                 ),
                 SizedBox(height: 24),

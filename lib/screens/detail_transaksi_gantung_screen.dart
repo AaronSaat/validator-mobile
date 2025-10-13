@@ -44,6 +44,7 @@ class _DetailTransaksiGantungScreenState
   }
 
   Future<void> _fetchDetail() async {
+    if (!mounted) return;
     setState(() {
       isLoading = true;
       errorMsg = null;
@@ -53,14 +54,17 @@ class _DetailTransaksiGantungScreenState
         idBayar: widget.bayarId.toString(),
         userId: widget.userId.toString(),
       );
+      if (!mounted) return;
       setState(() {
         detailData = result;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         errorMsg = e.toString();
       });
     } finally {
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
@@ -284,12 +288,10 @@ class _DetailTransaksiGantungScreenState
             color: AppColors.baseBackground,
           ),
           isLoading
-              ? Expanded(
-                  child: Center(
-                    child: LoadingAnimationWidget.beat(
-                      color: Colors.white,
-                      size: 80,
-                    ),
+              ? Center(
+                  child: LoadingAnimationWidget.beat(
+                    color: Colors.white,
+                    size: 80,
                   ),
                 )
               : errorMsg != null
@@ -577,6 +579,32 @@ class _DetailTransaksiGantungScreenState
                                         color: AppColors.textwhite,
                                         fontWeight: FontWeight.bold,
                                       ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              TableRow(
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      'Branch',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: Text(
+                                      detailData!['model_pembelian']['branch'] ==
+                                              1
+                                          ? 'STT SAAT'
+                                          : detailData!['model_pembelian']['branch'] ==
+                                                2
+                                          ? 'Yayasan SAAT'
+                                          : '-',
+                                      style: const TextStyle(fontSize: 12),
                                     ),
                                   ),
                                 ],
@@ -1563,30 +1591,32 @@ class _DetailTransaksiGantungScreenState
                                           final keterangan =
                                               st['keterangan']?.toString() ??
                                               '';
-                                           print('status length: ${status.length}, keterangan length: ${keterangan.length}');
-                                           if (status.length <= 25 &&
+                                          print(
+                                            'status length: ${status.length}, keterangan length: ${keterangan.length}',
+                                          );
+                                          if (status.length <= 25 &&
                                               keterangan.length <= 25) {
                                             return 108.0;
-                                            } else if ((status.length > 25 &&
-                                                status.length <= 50) ||
+                                          } else if ((status.length > 25 &&
+                                                  status.length <= 50) ||
                                               (keterangan.length > 25 &&
-                                                keterangan.length <= 50)) {
+                                                  keterangan.length <= 50)) {
                                             return 148.0;
-                                            } else if ((status.length > 50 &&
-                                                status.length <= 100) &&
+                                          } else if ((status.length > 50 &&
+                                                  status.length <= 100) &&
                                               keterangan.length < 25) {
                                             return 132.0;
-                                            } else if ((status.length > 50 &&
-                                                status.length <= 100) ||
+                                          } else if ((status.length > 50 &&
+                                                  status.length <= 100) ||
                                               (keterangan.length > 50 &&
-                                                keterangan.length <= 100)) {
+                                                  keterangan.length <= 100)) {
                                             return 148.0;
-                                            } else if (status.length > 100 ||
+                                          } else if (status.length > 100 ||
                                               keterangan.length > 100) {
                                             return 172.0;
-                                            } else {
+                                          } else {
                                             return 124.0;
-                                            }
+                                          }
                                         })(),
                                         decoration: BoxDecoration(
                                           color: AppStatus.getStatusColor(

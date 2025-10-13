@@ -8,6 +8,7 @@ import 'package:validator/screens/arsip_transaksi_screen.dart';
 import 'package:validator/screens/butuh_konfirmasi_penyelesaian_screen.dart';
 import 'package:validator/screens/login_screen.dart';
 import 'package:validator/screens/butuh_persetujuan_screen.dart';
+import 'package:validator/screens/profile_screen.dart';
 import 'package:validator/screens/transaksi_gantung_screen.dart';
 import 'package:validator/services/api_service.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -60,13 +61,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       _showLocalNotification(message);
     });
 
-    // allowNotification();
     AppBadgePlus.isSupported().then((value) {
       isSupported = value;
       setState(() {});
     });
 
-    // Contoh: update badge dari beforeActionData
+    // update badge dari beforeActionData
     Future.delayed(Duration.zero, () async {
       // Ambil data dari API beforeAction
       if (userId != null && userId!.isNotEmpty) {
@@ -91,6 +91,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
     print('SharedPreferences proses: fromScreen: ${widget.fromScreen}');
     if (widget.fromScreen == 'login') {
       _loadUserInfo();
+    } else if (widget.fromScreen == 'notifikasi_dashboard') {
+      _loadUserInfo();
+    } else if (widget.fromScreen == 'splash_screen') {
+      _loadUserInfo();
     }
     SharedPreferences.getInstance().then((prefs) {
       final proses = prefs.getString('proses');
@@ -99,13 +103,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _loadUserInfo();
       }
     });
-
-    // Simpan informasi perangkat pengguna jika notifikasi diizinkan
-    _saveUserDevice();
   }
 
   Future<void> _loadUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       username = prefs.getString('username') ?? '';
       email = prefs.getString('email') ?? '';
@@ -125,6 +127,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _saveUserDevice() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       isLoading = true;
       errorMsg = null;
@@ -132,13 +135,41 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     // Cek izin notifikasi terlebih dahulu
     bool notificationAllowed = false;
-    if (Platform.isAndroid || Platform.isIOS) {
-      final status = await permission_handler.Permission.notification.status;
-      notificationAllowed = status.isGranted;
+    if (Platform.isIOS) {
+      NotificationSettings settings = await FirebaseMessaging.instance
+          .requestPermission(alert: true, badge: true, sound: true);
+      notificationAllowed =
+          settings.authorizationStatus == AuthorizationStatus.authorized ||
+          settings.authorizationStatus == AuthorizationStatus.provisional;
+      print(
+        notificationAllowed
+            ? 'User granted permission'
+            : 'User declined or has not accepted notification permissions',
+      );
+    } else if (Platform.isAndroid) {
+      try {
+        final deviceInfo = await DeviceInfoPlugin().androidInfo;
+        if (deviceInfo.version.sdkInt >= 33) {
+          final permission = await permission_handler.Permission.notification
+              .request();
+          notificationAllowed = permission.isGranted;
+          print(
+            notificationAllowed
+                ? 'Android notification permission granted'
+                : 'Android notification permission denied',
+          );
+        } else {
+          // For Android < 13, permission is granted by default
+          notificationAllowed = true;
+        }
+      } catch (e) {
+        print('Error requesting Android notification permission: $e');
+      }
     }
 
     if (!notificationAllowed) {
-      print('save Notifikasi belum diizinkan, tidak menyimpan device.');
+      print('Notifikasi belum diizinkan, tidak menyimpan device.');
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
@@ -196,14 +227,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
         deviceManufacturer: deviceManufacturerInfo,
         deviceVersion: deviceVersionInfo,
       );
+      if (!mounted) return;
       setState(() {
         print('saveUserDevice result: $result');
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         errorMsg = 'Gagal memuat data: $e';
       });
     } finally {
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
@@ -212,6 +246,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _fetchBeforeAction() async {
     if (userId == null || userId!.isEmpty) return;
+    if (!mounted) return;
     setState(() {
       isLoading = true;
       errorMsg = null;
@@ -219,14 +254,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
     try {
       final result = await ApiService.beforeAction(userId: int.parse(userId!));
+      if (!mounted) return;
       setState(() {
         beforeActionData = result['data'] ?? {};
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         errorMsg = 'Gagal memuat data: $e';
       });
     } finally {
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
@@ -235,6 +273,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> _fetchSiteIndex() async {
     if (userId == null || userId!.isEmpty) return;
+    if (!mounted) return;
     setState(() {
       isLoading = true;
       errorMsg = null;
@@ -242,15 +281,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
     });
     try {
       final result = await ApiService.siteIndex(userId: int.parse(userId!));
+      if (!mounted) return;
       setState(() {
         siteIndexData = result;
         print('siteIndexData: $siteIndexData');
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         errorMsg = 'Gagal memuat data: $e';
       });
     } finally {
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
@@ -268,31 +310,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return DateFormat('yyyy/MM/dd').format(duaBulanSebelum);
   }
 
-  void allowNotification() async {
-    if (Platform.isAndroid || Platform.isIOS) {
-      if (await permission_handler.Permission.notification.isGranted) {
-        isNotificationAllowed = true;
-        setState(() {});
-      } else {
-        await permission_handler.Permission.notification.request().then((
-          value,
-        ) {
-          if (value.isGranted) {
-            isNotificationAllowed = true;
-            setState(() {});
-            print('Permission is granted');
-          } else {
-            print('Permission is not granted');
-            isNotificationAllowed = false;
-            setState(() {});
-          }
-        });
-      }
-    } else {
-      print('This platform is not supported for notification permissions.');
-    }
-  }
-
   void _showLocalNotification(RemoteMessage message) {
     const androidDetails = AndroidNotificationDetails(
       'fcm_channel', // id channel
@@ -302,6 +319,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
     const notifDetails = NotificationDetails(android: androidDetails);
 
+    print(
+      'FCM Showing local notification: ${message.notification?.title}, ${message.notification?.body}',
+    );
     flutterLocalNotificationsPlugin.show(
       message.hashCode,
       message.notification?.title ?? 'Notifikasi',
@@ -312,8 +332,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final tglPengajuan = getTanggalPengajuanHariIni();
-    final tglPengajuanAkhir = getTanggalPengajuan2BulanSebelumnya();
+    final tglPengajuan = getTanggalPengajuan2BulanSebelumnya();
+    final tglPengajuanAkhir = getTanggalPengajuanHariIni();
     print('tglPengajuan: $tglPengajuan, tglPengajuanAkhir: $tglPengajuanAkhir');
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -321,36 +341,48 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: Colors.transparent,
         title: Padding(
           padding: const EdgeInsets.only(left: 8.0),
-          child: Container(
-            height: 48,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              shape: BoxShape.rectangle,
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                const SizedBox(width: 16),
-                const Icon(Icons.account_circle, color: Colors.black, size: 32),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    username ?? '',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
+          // profil
+          child: InkWell(
+            borderRadius: BorderRadius.circular(24),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                shape: BoxShape.rectangle,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  const SizedBox(width: 16),
+                  const Icon(
+                    Icons.account_circle,
+                    color: Colors.black,
+                    size: 32,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      username ?? '',
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
-
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.black),
@@ -358,16 +390,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             onPressed: () {
               isLoading = true;
               _loadUserInfo();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.black),
-            tooltip: 'Logout',
-            onPressed: () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                (route) => false,
-              );
             },
           ),
         ],

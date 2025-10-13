@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:validator/screens/dashboard_screen.dart';
 import 'package:validator/screens/detail_butuh_konfirmasi_penyelesaian_screen.dart';
 import 'package:validator/screens/login_screen.dart';
+import 'package:validator/screens/profile_screen.dart' show ProfileScreen;
 import 'package:validator/screens/searching_screen.dart';
 import 'package:validator/services/api_service.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -34,6 +35,7 @@ class _ButuhKonfirmasiPenyelesaianScreenState
 
   Future<void> _loadUserInfo() async {
     final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       username = prefs.getString('username') ?? '';
       email = prefs.getString('email') ?? '';
@@ -44,6 +46,7 @@ class _ButuhKonfirmasiPenyelesaianScreenState
   }
 
   Future<void> _fetchButuhKonfirmasiPenyelesaian() async {
+    if (!mounted) return;
     setState(() {
       isLoading = true;
       errorMsg = null;
@@ -55,6 +58,7 @@ class _ButuhKonfirmasiPenyelesaianScreenState
       );
       print(result);
       if (result['success'] == true) {
+        if (!mounted) return;
         setState(() {
           butuhKonfirmasiPenyelesaianList = result['dataProvider'] ?? [];
           print(
@@ -62,15 +66,18 @@ class _ButuhKonfirmasiPenyelesaianScreenState
           );
         });
       } else {
+        if (!mounted) return;
         setState(() {
           errorMsg = result['message'] ?? 'Failed to fetch data';
         });
       }
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         errorMsg = e.toString();
       });
     } finally {
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
@@ -103,32 +110,43 @@ class _ButuhKonfirmasiPenyelesaianScreenState
         ),
         title: Padding(
           padding: const EdgeInsets.only(left: 8.0),
-          child: Container(
-            height: 48,
-            decoration: BoxDecoration(
-              color: Colors.grey[300],
-              shape: BoxShape.rectangle,
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                const SizedBox(width: 16),
-                const Icon(Icons.account_circle, color: Colors.black, size: 32),
-                const SizedBox(width: 8),
-                Flexible(
-                  child: Text(
-                    username ?? '',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.center,
+          child: InkWell(
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
+              );
+            },
+            child: Container(
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                shape: BoxShape.rectangle,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  const SizedBox(width: 16),
+                  const Icon(
+                    Icons.account_circle,
+                    color: Colors.black,
+                    size: 32,
                   ),
-                ),
-              ],
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      username ?? '',
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
@@ -138,16 +156,6 @@ class _ButuhKonfirmasiPenyelesaianScreenState
             tooltip: 'Refresh',
             onPressed: () {
               _fetchButuhKonfirmasiPenyelesaian();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.black),
-            tooltip: 'Logout',
-            onPressed: () {
-              Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (context) => const LoginScreen()),
-                (route) => false,
-              );
             },
           ),
         ],
@@ -171,16 +179,14 @@ class _ButuhKonfirmasiPenyelesaianScreenState
             child: Column(
               children: [
                 if (isLoading)
-                  Expanded(
-                    child: Center(
-                      child: LoadingAnimationWidget.beat(
-                        color: Colors.white,
-                        size: 80,
-                      ),
+                  Center(
+                    child: LoadingAnimationWidget.beat(
+                      color: Colors.white,
+                      size: 80,
                     ),
                   )
                 else if (errorMsg != null)
-                  Expanded(child: Center(child: Text(errorMsg!)))
+                  Center(child: Text(errorMsg!))
                 else ...[
                   if (widget.search != "")
                     Padding(
@@ -379,7 +385,7 @@ class _ButuhKonfirmasiPenyelesaianScreenState
                             final result = await Navigator.of(context).push(
                               MaterialPageRoute(
                                 builder: (context) =>
-                                    DetailButuhKonfrimasiPenyelesaianScreen(
+                                    DetailButuhKonfirmasiPenyelesaianScreen(
                                       bayarId: item['id_bayar'],
                                       userId: userId,
                                     ),
@@ -392,7 +398,7 @@ class _ButuhKonfirmasiPenyelesaianScreenState
                           },
                           child: SizedBox(
                             width: MediaQuery.of(context).size.width,
-                            height: MediaQuery.of(context).size.height * 0.45,
+                            height: MediaQuery.of(context).size.height * 0.48,
                             child: Card(
                               margin: const EdgeInsets.symmetric(
                                 horizontal: 16,
@@ -452,88 +458,131 @@ class _ButuhKonfirmasiPenyelesaianScreenState
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                          // ignore: prefer_interpolation_to_compose_strings
-                                          '${index + 1}. ' +
-                                            (item['barang_jasa'] == 1
-                                              ? 'PPB: '
-                                              : 'PJL: ') +
-                                            (item['no_ppb'] ?? '-'),
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                          '${item['tgl_uangkeluar'] ?? '-'}',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.normal,
-                                          ),
+                                            // ignore: prefer_interpolation_to_compose_strings
+                                            '${index + 1}. ' +
+                                                (item['barang_jasa'] == 1
+                                                    ? 'PPB: '
+                                                    : 'PJL: ') +
+                                                (item['no_ppb'] ?? '-'),
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                           const SizedBox(height: 8),
                                           Text(
-                                          'Divisi: ${item['nama_divisi'] ?? '-'}',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.normal,
-                                          ),
-                                          ),
-                                          Text(
-                                          'Nama Pemohon: ${item['nama_pemohon'] ?? '-'}',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.normal,
-                                          ),
-                                          ),
-                                          Text(
-                                          // ignore: prefer_interpolation_to_compose_strings
-                                          'Keperluan: ' +
-                                            ((item['keperluan']
-                                                  ?.toString()
-                                                  .toLowerCase() ==
-                                                'keperluan')
-                                              ? '-'
-                                              : (item['keperluan'] ??
-                                                  '-')),
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.normal,
-                                          ),
+                                            '${item['tgl_uangkeluar'] ?? '-'}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.normal,
+                                            ),
                                           ),
                                           const SizedBox(height: 8),
                                           Text(
-                                          'Tunai/Transfer:',
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.normal,
-                                          ),
+                                            'Divisi: ${item['nama_divisi'] ?? '-'}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.normal,
+                                            ),
                                           ),
                                           Text(
-                                          (item['tunai_transfer'] != null
-                                            ? item['tunai_transfer']
-                                                .toString()
-                                                .split(';')
-                                                .join('\n')
-                                            : '-'),
-                                          style: const TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.normal,
+                                            'Nama Pemohon: ${item['nama_pemohon'] ?? '-'}',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.normal,
+                                            ),
                                           ),
+                                          Text(
+                                            // ignore: prefer_interpolation_to_compose_strings
+                                            'Keperluan: ' +
+                                                ((item['keperluan']
+                                                            ?.toString()
+                                                            .toLowerCase() ==
+                                                        'keperluan')
+                                                    ? '-'
+                                                    : (item['keperluan'] ??
+                                                          '-')),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.normal,
+                                            ),
                                           ),
                                           const SizedBox(height: 8),
                                           Text(
-                                          item['bayar_realisasi'] != null &&
-                                              item['bayar_realisasi']
-                                                .toString()
-                                                .isNotEmpty
-                                            ? item['bayar_realisasi']
-                                            : (item['bayar_total'] ?? '-'),
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
+                                            'Tunai/Transfer:',
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.normal,
+                                            ),
                                           ),
+                                          Text(
+                                            (item['tunai_transfer'] != null
+                                                ? item['tunai_transfer']
+                                                      .toString()
+                                                      .split(';')
+                                                      .join('\n')
+                                                : '-'),
+                                            style: const TextStyle(
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.normal,
+                                            ),
                                           ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            item['bayar_realisasi'] != null &&
+                                                    item['bayar_realisasi']
+                                                        .toString()
+                                                        .isNotEmpty
+                                                ? item['bayar_realisasi']
+                                                : (item['bayar_total'] ?? '-'),
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          if (item['branch'] == 1)
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 4,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.green,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: const Text(
+                                                'Branch: STT SAAT',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            )
+                                          else if (item['branch'] == 2)
+                                            Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 4,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: Colors.red,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: const Text(
+                                                'Branch: Yayasan SAAT',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ),
                                         ],
                                       ),
                                     ),
