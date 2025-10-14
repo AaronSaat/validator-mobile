@@ -89,6 +89,33 @@ class ApiService {
     }
   }
 
+  static Future<Map<String, dynamic>> checkVersion(String version) async {
+    try {
+      final url = Uri.parse('${baseurl}check-version');
+      final response = await http
+          .post(
+            url,
+            headers: {'Content-Type': 'application/json'},
+            body: json.encode({'version': version}),
+          )
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else {
+        final error = json.decode(response.body);
+        throw Exception(error['message'] ?? 'Check version failed');
+      }
+    } on http.ClientException catch (e) {
+      throw Exception('Network error: $e');
+    } on TimeoutException {
+      throw Exception('Request timed out');
+    } catch (e) {
+      print('Error: $e');
+      throw Exception('$e');
+    }
+  }
+
   static Future<Map<String, dynamic>> saveUserDevice({
     required String userId,
     required String username,
@@ -246,6 +273,7 @@ class ApiService {
   static Future<Map<String, dynamic>> persetujuan({
     required int userId,
     String search = '',
+    required int page,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
@@ -257,12 +285,13 @@ class ApiService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: json.encode({'user_id': userId, 'search': search}),
+      body: json.encode({'user_id': userId, 'search': search, 'page': page}),
     );
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      throw Exception('Failed to fetch persetujuan');
+      final error = json.decode(response.body);
+      throw Exception(error['message'] ?? 'Failed to fetch persetujuan');
     }
   }
 
@@ -358,6 +387,7 @@ class ApiService {
   static Future<Map<String, dynamic>> transaksiGantung({
     required int userId,
     String search = '',
+    required int page,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
@@ -369,18 +399,20 @@ class ApiService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: json.encode({'user_id': userId, 'search': search}),
+      body: json.encode({'user_id': userId, 'search': search, 'page': page}),
     );
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      throw Exception('Failed to fetch transaksi gantung');
+      final error = json.decode(response.body);
+      throw Exception(error['message'] ?? 'Failed to fetch persetujuan');
     }
   }
 
   static Future<Map<String, dynamic>> konfirmasiBarangtiba({
     required int userId,
     String search = '',
+    required int page,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
@@ -392,12 +424,13 @@ class ApiService {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-      body: json.encode({'user_id': userId, 'search': search}),
+      body: json.encode({'user_id': userId, 'search': search, 'page': page}),
     );
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      throw Exception('Failed to fetch konfirmasi barang tiba');
+      final error = json.decode(response.body);
+      throw Exception(error['message'] ?? 'Failed to fetch persetujuan');
     }
   }
 
@@ -405,6 +438,7 @@ class ApiService {
     required int userId,
     required String username,
     String search = '',
+    required int page,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
@@ -420,12 +454,17 @@ class ApiService {
         'user_id': userId,
         'username': username,
         'search': search,
+        'page': page,
       }),
     );
+
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      throw Exception('Failed to fetch arsip transaksi kembali');
+      final error = json.decode(response.body);
+      throw Exception(
+        error['message'] ?? 'Failed to fetch arsip transaksi kembali',
+      );
     }
   }
 
@@ -435,6 +474,7 @@ class ApiService {
     String tgl_pengajuan = '',
     String tgl_pengajuan_akhir = '',
     String search = '',
+    required int page,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token') ?? '';
@@ -452,18 +492,15 @@ class ApiService {
         'tgl_pengajuan': tgl_pengajuan,
         'tgl_pengajuan_akhir': tgl_pengajuan_akhir,
         'search': search,
+        'page': page,
       }),
     );
 
-    print('URL: $url');
-    print(
-      'Request Body: ${json.encode({'user_id': userId, 'jenis': jenis, 'tgl_pengajuan': tgl_pengajuan, 'tgl_pengajuan_akhir': tgl_pengajuan_akhir, 'search': search})}',
-    );
-    print('Response Status: ${response.statusCode}');
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {
-      throw Exception('Failed to fetch arsip transaksi  ');
+      final error = json.decode(response.body);
+      throw Exception(error['message'] ?? 'Failed to fetch persetujuan');
     }
   }
 
@@ -483,6 +520,10 @@ class ApiService {
       },
       body: json.encode({'id_bayar': idBayar, 'user_id': userId}),
     );
+
+    print('URL: $url');
+    print('Response Status: ${response.statusCode}');
+    print('Response Body: ${response.body}');
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {

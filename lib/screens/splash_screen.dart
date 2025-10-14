@@ -202,7 +202,7 @@ class _SplashScreenState extends State<SplashScreen>
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: AppColors.textGrey,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -211,7 +211,7 @@ class _SplashScreenState extends State<SplashScreen>
                     style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
+                      color: AppColors.textGrey,
                     ),
                     textAlign: TextAlign.center,
                   ),

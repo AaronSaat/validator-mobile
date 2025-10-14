@@ -29,6 +29,9 @@ class _ArsipTransaksiPernahDikembalikanOlehAndaScreenState
   List<dynamic> ArsipTransaksiPernahDikembalikanOlehAndaList = [];
   bool isLoading = true;
   String? errorMsg;
+  int page = 1;
+  int totalPages = 1;
+  String paginationInfo = '';
 
   @override
   void initState() {
@@ -59,13 +62,17 @@ class _ArsipTransaksiPernahDikembalikanOlehAndaScreenState
         userId: userId,
         username: username ?? '',
         search: widget.search,
+        page: page,
       );
-      print(result);
       if (result['success'] == true) {
         if (!mounted) return;
         setState(() {
           ArsipTransaksiPernahDikembalikanOlehAndaList =
               result['dataProvider'] ?? [];
+          totalPages = result['total_pages'] != null
+              ? int.tryParse(result['total_pages'].toString()) ?? 1
+              : 1;
+          paginationInfo = result['pagination_info'] ?? '';
         });
       } else {
         if (!mounted) return;
@@ -181,14 +188,72 @@ class _ArsipTransaksiPernahDikembalikanOlehAndaScreenState
             child: Column(
               children: [
                 if (isLoading)
-                  Center(
-                    child: LoadingAnimationWidget.beat(
-                      color: Colors.white,
-                      size: 80,
+                  Expanded(
+                    child: Center(
+                      child: LoadingAnimationWidget.beat(
+                        color: Colors.white,
+                        size: 80,
+                      ),
                     ),
                   )
                 else if (errorMsg != null)
-                  Center(child: Text(errorMsg!))
+                  Expanded(
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/images/no_data.png',
+                            width: 128,
+                            height: 128,
+                          ),
+                          const SizedBox(height: 16),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                            ),
+                            child: Text(
+                              errorMsg ?? 'Tidak ada data',
+                              style: const TextStyle(
+                                color: AppColors.textblack,
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          SizedBox(
+                            width: MediaQuery.of(context).size.width * 0.5,
+                            height: 48,
+                            child: Material(
+                              color: AppColors.success,
+                              borderRadius: BorderRadius.circular(8),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(8),
+                                onTap:
+                                    _fetchArsipTransaksiPernahDikembalikanOlehAnda,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    Icon(Icons.refresh, color: Colors.white),
+                                    SizedBox(width: 8),
+                                    Text(
+                                      'Muat Ulang',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
                 else ...[
                   if (widget.search != "")
                     Padding(
@@ -347,316 +412,499 @@ class _ArsipTransaksiPernahDikembalikanOlehAndaScreenState
                           ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16.0,
-                          vertical: 8.0,
-                        ),
-                        child: Container(
-                          width: double.infinity,
-                          decoration: BoxDecoration(color: AppColors.success),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Row(
-                              children: [
-                                // Icon dan text di ujung kiri
-                                const Icon(
-                                  Icons.list_alt,
-                                  color: AppColors.textwhite,
-                                ),
-                                const SizedBox(width: 8),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Showing ${ArsipTransaksiPernahDikembalikanOlehAndaList.length} items',
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.normal,
-                                        fontSize: 12,
-                                        color: AppColors.textwhite,
-                                      ),
+                    ],
+                  ),
+                  // Pagination preview box with iOS-style arrows
+                  ArsipTransaksiPernahDikembalikanOlehAndaList.isEmpty
+                      ? const SizedBox.shrink()
+                      : Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16.0,
+                            vertical: 8.0,
+                          ),
+                          child: Row(
+                            children: [
+                              // Left arrow
+                              Container(
+                                height: 44,
+                                width: 44,
+                                decoration: BoxDecoration(
+                                  color: AppColors.success,
+                                  borderRadius: const BorderRadius.only(
+                                    topLeft: Radius.circular(12),
+                                    bottomLeft: Radius.circular(12),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.15),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
                                     ),
                                   ],
                                 ),
-                              ],
-                            ),
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.arrow_back_ios_new_rounded,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: page > 1
+                                      ? () {
+                                          setState(() {
+                                            page--;
+                                          });
+                                          _fetchArsipTransaksiPernahDikembalikanOlehAnda();
+                                        }
+                                      : null,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // Middle: showing items & page info
+                              Expanded(
+                                child: Container(
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    color: AppColors.success,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.grey.withOpacity(0.15),
+                                        blurRadius: 4,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 12.0,
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        const Icon(
+                                          Icons.list_alt,
+                                          color: AppColors.textwhite,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Text(
+                                          '$paginationInfo',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.normal,
+                                            fontSize: 12,
+                                            color: AppColors.textwhite,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              // Right arrow
+                              Container(
+                                height: 44,
+                                width: 44,
+                                decoration: BoxDecoration(
+                                  color: AppColors.success,
+                                  borderRadius: const BorderRadius.only(
+                                    topRight: Radius.circular(12),
+                                    bottomRight: Radius.circular(12),
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.grey.withOpacity(0.15),
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    color: Colors.white,
+                                  ),
+                                  onPressed: page < totalPages
+                                      ? () {
+                                          setState(() {
+                                            page++;
+                                          });
+                                          _fetchArsipTransaksiPernahDikembalikanOlehAnda();
+                                        }
+                                      : null,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
                   Expanded(
-                    child: ListView.builder(
-                      itemCount:
-                          ArsipTransaksiPernahDikembalikanOlehAndaList.length,
-                      itemBuilder: (context, index) {
-                        final item =
-                            ArsipTransaksiPernahDikembalikanOlehAndaList[index];
-                        return GestureDetector(
-                          onTap: () async {
-                            final result = await Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    DetailTransaksiGantungScreen(
-                                      bayarId:
-                                          int.tryParse(
-                                            item['id_bayar'].toString(),
-                                          ) ??
-                                          0,
-                                      userId: userId,
+                    child:
+                        (ArsipTransaksiPernahDikembalikanOlehAndaList.isEmpty)
+                        ? Center(
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Image.asset(
+                                  'assets/images/no_data.png',
+                                  width: 128,
+                                  height: 128,
+                                ),
+                                const SizedBox(height: 16),
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0,
+                                  ),
+                                  child: const Text(
+                                    'Tidak ada data arsip transaksi pernah dikembalikan oleh anda',
+                                    style: TextStyle(
+                                      color: AppColors.textblack,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
                                     ),
-                              ),
-                            );
-                            // Jika kembali dari detail dan result == true, refresh data
-                            if (result == 'reload') {
-                              _fetchArsipTransaksiPernahDikembalikanOlehAnda();
-                            }
-                          },
-                          child: SizedBox(
-                            width: MediaQuery.of(context).size.width,
-                            height: MediaQuery.of(context).size.height * 0.43,
-                            child: Card(
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 8,
-                              ),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // Kotak status di kiri
-                                  Container(
-                                    width: 100,
-                                    decoration: BoxDecoration(
-                                      color: AppStatus.getStatusColor(
-                                        item['status'],
-                                      ),
-                                      borderRadius: const BorderRadius.only(
-                                        topLeft: Radius.circular(12),
-                                        bottomLeft: Radius.circular(12),
-                                      ),
-                                    ),
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 8.0,
-                                      ),
-                                      child: Column(
+                                    textAlign: TextAlign.center,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                SizedBox(
+                                  width:
+                                      MediaQuery.of(context).size.width * 0.5,
+                                  height: 48,
+                                  child: Material(
+                                    color: AppColors.success,
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(8),
+                                      onTap:
+                                          _fetchArsipTransaksiPernahDikembalikanOlehAnda,
+                                      child: Row(
                                         mainAxisAlignment:
                                             MainAxisAlignment.center,
-                                        children: [
+                                        children: const [
                                           Icon(
-                                            AppStatus.getStatusIcon(
-                                              item['status'],
-                                            ),
+                                            Icons.refresh,
                                             color: Colors.white,
-                                            size: 32,
                                           ),
-                                          const SizedBox(height: 4),
+                                          SizedBox(width: 8),
                                           Text(
-                                            item['status_text'] ?? '-',
-                                            style: const TextStyle(
+                                            'Muat Ulang',
+                                            style: TextStyle(
                                               color: Colors.white,
                                               fontWeight: FontWeight.bold,
-                                              fontSize: 14,
                                             ),
-                                            textAlign: TextAlign.center,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            item['tgl_uangkeluar'] ?? '-',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 14,
-                                            ),
-                                            textAlign: TextAlign.center,
                                           ),
                                         ],
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  // Konten utama card
-                                  Expanded(
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(8.0),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            // ignore: prefer_interpolation_to_compose_strings
-                                            '${index + 1}. ' +
-                                                (item['barang_jasa'] == 1
-                                                    ? 'PPB: '
-                                                    : 'PJL: ') +
-                                                (item['no_ppb'] ?? '-'),
-                                            style: const TextStyle(
-                                              fontSize: 16,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            'Divisi: ${item['nama_divisi'] ?? '-'}',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.normal,
-                                            ),
-                                          ),
-                                          Text(
-                                            'Nama Pemohon: ${item['nama_pemohon'] ?? '-'}',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.normal,
-                                            ),
-                                          ),
-                                          Text(
-                                            // ignore: prefer_interpolation_to_compose_strings
-                                            'Keterangan/Keperluan: ' +
-                                                ((item['keterangan']
-                                                            ?.toString()
-                                                            .toLowerCase() ==
-                                                        'keterangan')
-                                                    ? '-'
-                                                    : (item['keterangan'] ??
-                                                          '-')),
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.normal,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Text(
-                                            'Total Jenis Barang: ${item['total_jenis_barang']}',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.normal,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          if (item['selisih_bayar'] == null)
-                                            Text(
-                                              (item['bayar_total'] ?? '-'),
-                                              style: const TextStyle(
-                                                fontSize: 14,
-                                                fontWeight: FontWeight.bold,
+                                ),
+                              ],
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount:
+                                ArsipTransaksiPernahDikembalikanOlehAndaList
+                                    .length,
+                            itemBuilder: (context, index) {
+                              final item =
+                                  ArsipTransaksiPernahDikembalikanOlehAndaList[index];
+                              return GestureDetector(
+                                onTap: () async {
+                                  final result = await Navigator.of(context)
+                                      .push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              DetailTransaksiGantungScreen(
+                                                bayarId:
+                                                    int.tryParse(
+                                                      item['id_bayar']
+                                                          .toString(),
+                                                    ) ??
+                                                    0,
+                                                userId: userId,
                                               ),
-                                            )
-                                          else
-                                            Container(
-                                              padding: const EdgeInsets.all(8),
-                                              decoration: BoxDecoration(
-                                                color: AppColors.error,
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                                boxShadow: [
-                                                  BoxShadow(
-                                                    color: Colors.black
-                                                        .withAlpha(20),
-                                                    blurRadius: 6,
-                                                    offset: const Offset(0, 2),
+                                        ),
+                                      );
+                                  // Jika kembali dari detail dan result == true, refresh data
+                                  if (result == 'reload') {
+                                    _fetchArsipTransaksiPernahDikembalikanOlehAnda();
+                                  }
+                                },
+                                child: SizedBox(
+                                  width: MediaQuery.of(context).size.width,
+                                  height:
+                                      MediaQuery.of(context).size.height * 0.43,
+                                  child: Card(
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        // Kotak status di kiri
+                                        Container(
+                                          width: 100,
+                                          decoration: BoxDecoration(
+                                            color: AppStatus.getStatusColor(
+                                              item['status'],
+                                            ),
+                                            borderRadius:
+                                                const BorderRadius.only(
+                                                  topLeft: Radius.circular(12),
+                                                  bottomLeft: Radius.circular(
+                                                    12,
                                                   ),
-                                                ],
-                                              ),
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
+                                                ),
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8.0,
+                                            ),
+                                            child: Column(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                Icon(
+                                                  AppStatus.getStatusIcon(
+                                                    item['status'],
+                                                  ),
+                                                  color: Colors.white,
+                                                  size: 32,
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  item['status_text'] ?? '-',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                  ),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                                const SizedBox(height: 4),
+                                                Text(
+                                                  item['tgl_uangkeluar'] ?? '-',
+                                                  style: const TextStyle(
+                                                    color: Colors.white,
+                                                    fontWeight: FontWeight.bold,
+                                                    fontSize: 14,
+                                                  ),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        // Konten utama card
+                                        Expanded(
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  // ignore: prefer_interpolation_to_compose_strings
+                                                  '${((page - 1) * 10 + index + 1)}. ' +
+                                                      (item['barang_jasa'] == 1
+                                                          ? 'PPB: '
+                                                          : 'PJL: ') +
+                                                      (item['no_ppb'] ?? '-'),
+                                                  style: const TextStyle(
+                                                    fontSize: 16,
+                                                    fontWeight: FontWeight.bold,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  'Divisi: ${item['nama_divisi'] ?? '-'}',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.normal,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  'Nama Pemohon: ${item['nama_pemohon'] ?? '-'}',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.normal,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  // ignore: prefer_interpolation_to_compose_strings
+                                                  'Keterangan/Keperluan: ' +
+                                                      ((item['keterangan']
+                                                                  ?.toString()
+                                                                  .toLowerCase() ==
+                                                              'keterangan')
+                                                          ? '-'
+                                                          : (item['keterangan'] ??
+                                                                '-')),
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.normal,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 8),
+                                                Text(
+                                                  'Total Jenis Barang: ${item['total_jenis_barang']}',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight:
+                                                        FontWeight.normal,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 8),
+                                                if (item['selisih_bayar'] ==
+                                                    null)
                                                   Text(
                                                     (item['bayar_total'] ??
                                                         '-'),
                                                     style: const TextStyle(
                                                       fontSize: 14,
-                                                      color: Colors.white,
-                                                      decoration: TextDecoration
-                                                          .lineThrough,
-                                                      decorationColor:
-                                                          Colors.white,
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    (item['bayar_realisasi'] ??
-                                                        '-'),
-                                                    style: const TextStyle(
-                                                      fontSize: 14,
-                                                      color: Colors.white,
                                                       fontWeight:
                                                           FontWeight.bold,
                                                     ),
-                                                  ),
-                                                  const SizedBox(height: 8),
-                                                  const Text(
-                                                    'Uang kembali:',
-                                                    style: TextStyle(
-                                                      fontSize: 12,
-                                                      color: Colors.white,
+                                                  )
+                                                else
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.all(8),
+                                                    decoration: BoxDecoration(
+                                                      color: AppColors.error,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                      boxShadow: [
+                                                        BoxShadow(
+                                                          color: Colors.black
+                                                              .withAlpha(20),
+                                                          blurRadius: 6,
+                                                          offset: const Offset(
+                                                            0,
+                                                            2,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        Text(
+                                                          (item['bayar_total'] ??
+                                                              '-'),
+                                                          style: const TextStyle(
+                                                            fontSize: 14,
+                                                            color: Colors.white,
+                                                            decoration:
+                                                                TextDecoration
+                                                                    .lineThrough,
+                                                            decorationColor:
+                                                                Colors.white,
+                                                          ),
+                                                        ),
+                                                        Text(
+                                                          (item['bayar_realisasi'] ??
+                                                              '-'),
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 14,
+                                                                color: Colors
+                                                                    .white,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                        ),
+                                                        const SizedBox(
+                                                          height: 8,
+                                                        ),
+                                                        const Text(
+                                                          'Uang kembali:',
+                                                          style: TextStyle(
+                                                            fontSize: 12,
+                                                            color: Colors.white,
+                                                          ),
+                                                        ),
+                                                        Text(
+                                                          (item['selisih_bayar'] ??
+                                                              '-'),
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 14,
+                                                                color: Colors
+                                                                    .white,
+                                                              ),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ),
-                                                  Text(
-                                                    (item['selisih_bayar'] ??
-                                                        '-'),
-                                                    style: const TextStyle(
-                                                      fontSize: 14,
-                                                      color: Colors.white,
+                                                const SizedBox(height: 8),
+                                                if (item['branch'] == 1)
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 4,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.green,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                    ),
+                                                    child: const Text(
+                                                      'Branch: STT SAAT',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 12,
+                                                      ),
+                                                    ),
+                                                  )
+                                                else if (item['branch'] == 2)
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 4,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: Colors.red,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                    ),
+                                                    child: const Text(
+                                                      'Branch: Yayasan SAAT',
+                                                      style: TextStyle(
+                                                        color: Colors.white,
+                                                        fontWeight:
+                                                            FontWeight.bold,
+                                                        fontSize: 12,
+                                                      ),
                                                     ),
                                                   ),
-                                                ],
-                                              ),
+                                              ],
                                             ),
-                                          const SizedBox(height: 8),
-                                          if (item['branch'] == 1)
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.green,
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              child: const Text(
-                                                'Branch: STT SAAT',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                            )
-                                          else if (item['branch'] == 2)
-                                            Container(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    horizontal: 8,
-                                                    vertical: 4,
-                                                  ),
-                                              decoration: BoxDecoration(
-                                                color: Colors.red,
-                                                borderRadius:
-                                                    BorderRadius.circular(8),
-                                              ),
-                                              child: const Text(
-                                                'Branch: Yayasan SAAT',
-                                                style: TextStyle(
-                                                  color: Colors.white,
-                                                  fontWeight: FontWeight.bold,
-                                                  fontSize: 12,
-                                                ),
-                                              ),
-                                            ),
-                                        ],
-                                      ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                ],
-                              ),
-                            ),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
-                    ),
                   ),
                 ],
               ],

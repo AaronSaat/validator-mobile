@@ -30,6 +30,7 @@ dependencies:
   firebase_messaging: ^16.0.2
   flutter_local_notifications: ^19.4.2
   device_info_plus: ^12.1.0
+  package_info_plus: ^9.0.0
 
 dev_dependencies:
   flutter_test:
@@ -52,6 +53,7 @@ flutter:
     - assets/images/app_icon_splash.png
     - assets/images/background_login.jpg
     - assets/images/bg-01.jpg
+    - assets/images/no_data.png
 
     - assets/cards/red.png
     - assets/cards/yellow.png

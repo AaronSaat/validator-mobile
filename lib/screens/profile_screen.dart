@@ -1,3 +1,4 @@
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
@@ -14,6 +15,7 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
+  String _appVersion = '';
   int _userId = 0;
   String _name = '';
   String _email = '';
@@ -29,6 +31,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
     print('ProfileScreen successfully initialized');
     loadNotificationSetting();
     print('Notification setting loaded: $_notificationsEnabled');
+    loadCurrentVersion();
+  }
+
+  Future<void> loadCurrentVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      setState(() {
+        _appVersion = '${info.version} (${info.buildNumber})';
+      });
+    } catch (e) {
+      setState(() {
+        _appVersion = 'Unknown';
+      });
+    }
   }
 
   Future<void> loadNotificationSetting() async {
@@ -41,7 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         fcmToken: fcmToken ?? '',
       );
       print('API response: $response');
-      if (response != null && response['success'] == true) {
+      if (response['success'] == true) {
         final allowNotification = response['allow_notification'] == 1
             ? true
             : false;
@@ -346,6 +362,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     ),
                                   ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Versi aplikasi: $_appVersion',
+                              style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              '© 2025 STT SAAT',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
                           ],
                         ),
                       ],
