@@ -6,6 +6,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:validator/screens/login_screen.dart';
 import 'package:validator/services/api_service.dart';
 import 'package:validator/utils/appcolors.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:validator/screens/delete_account_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({Key? key}) : super(key: key);
@@ -321,6 +323,126 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                     ],
                                   ),
+                                  const SizedBox(height: 8),
+                                  const Divider(
+                                    height: 16,
+                                    thickness: 1,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  GestureDetector(
+                                    onTap: () {
+                                      showDialog(
+                                        context: context,
+                                        builder: (context) => AlertDialog(
+                                          title: const Text(
+                                            'Kebijakan Privasi',
+                                          ),
+                                          content: SingleChildScrollView(
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                const Text(
+                                                  'Aplikasi ini menghormati privasi Anda. Data pribadi Anda hanya digunakan untuk keperluan aplikasi dan tidak dibagikan ke pihak ketiga tanpa izin Anda. Untuk informasi lebih lanjut, silakan hubungi developer.\n\nTeam IT: ',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 4),
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    launchUrl(
+                                                      Uri.parse(
+                                                        'mailto:itsupport@seabs.ac.id',
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: const Text(
+                                                    'itsupport@seabs.ac.id',
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      color: Colors.blue,
+                                                      decoration: TextDecoration
+                                                          .underline,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed: () =>
+                                                  Navigator.of(context).pop(),
+                                              child: const Text('Tutup'),
+                                            ),
+                                          ],
+                                        ),
+                                      );
+                                    },
+                                    child: Row(
+                                      children: [
+                                        const Icon(
+                                          Icons.privacy_tip,
+                                          color: Colors.black,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        const Expanded(
+                                          child: Text(
+                                            'Kebijakan Privasi',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        Icon(
+                                          Icons.chevron_right,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  const Divider(
+                                    height: 16,
+                                    thickness: 1,
+                                    color: Colors.grey,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  GestureDetector(
+                                    onTap: () {
+                                      Navigator.of(context).push(
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              DeleteAccountScreen(
+                                                userId: _userId,
+                                                userName: _name,
+                                                userEmail: _email,
+                                              ),
+                                        ),
+                                      );
+                                    },
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.delete_forever),
+                                        const SizedBox(width: 8),
+                                        const Expanded(
+                                          child: Text(
+                                            'Hapus Akun',
+                                            style: TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                        Icon(
+                                          Icons.chevron_right,
+                                          color: Colors.grey[600],
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
                                 ],
                               ),
                             ),

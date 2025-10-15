@@ -89,14 +89,16 @@ class ApiService {
     }
   }
 
-  static Future<Map<String, dynamic>> checkVersion(String version) async {
+  static Future<Map<String, dynamic>> checkVersion({
+    required String version,
+  }) async {
     try {
       final url = Uri.parse('${baseurl}check-version');
       final response = await http
           .post(
             url,
             headers: {'Content-Type': 'application/json'},
-            body: json.encode({'version': version}),
+            body: json.encode({'user_version': version}),
           )
           .timeout(const Duration(seconds: 10));
 
@@ -180,6 +182,32 @@ class ApiService {
     print('Request Body: ${json.encode({'fcm_token': fcmToken})}');
     print('Response Status: ${response.statusCode}');
     print('Response Body: ${response.body}');
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      final error = json.decode(response.body);
+      throw Exception(error['message'] ?? 'Delete user device failed');
+    }
+  }
+
+  static Future<Map<String, dynamic>> deleteUser({
+    required String userId,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token') ?? '';
+
+    final url = Uri.parse('${baseurl}delete-user');
+    final response = await http
+        .post(
+          url,
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: json.encode({'user_id': userId}),
+        )
+        .timeout(const Duration(seconds: 10));
+
     if (response.statusCode == 200) {
       return json.decode(response.body);
     } else {

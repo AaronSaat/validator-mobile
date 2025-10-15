@@ -1,3 +1,4 @@
+import 'package:package_info_plus/package_info_plus.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,6 +10,7 @@ import 'package:validator/screens/detail_butuh_persetujuan_screen.dart';
 import 'package:validator/screens/login_screen.dart';
 import 'package:validator/services/api_service.dart';
 import 'package:validator/utils/appcolors.dart'; // Pastikan path ini sesuai
+import 'package:url_launcher/url_launcher.dart';
 
 class SplashScreen extends StatefulWidget {
   final bool fromNotification;
@@ -29,6 +31,9 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with SingleTickerProviderStateMixin {
+  String? userVersion;
+  String? currentVersion;
+  bool _showUpdateDialog = false;
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;
 
@@ -41,8 +46,68 @@ class _SplashScreenState extends State<SplashScreen>
     );
     _fadeAnimation = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     _controller.forward();
+    loadCurrentVersion();
+  }
 
-    _startValidation();
+  Future<void> loadCurrentVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      userVersion = info.version;
+      print('Local Version: $userVersion');
+      final result = await ApiService.checkVersion(version: userVersion!);
+      currentVersion = result['current_version']?.toString();
+      print('Server Version: $currentVersion');
+      if (currentVersion != null &&
+          userVersion != null &&
+          currentVersion != userVersion) {
+        setState(() {
+          _showUpdateDialog = true;
+        });
+        await Future.delayed(const Duration(milliseconds: 500));
+        if (mounted) {
+          await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              title: const Text('Update Tersedia'),
+              content: Text(
+                'Versi aplikasi terbaru ($currentVersion) tersedia. Silakan update aplikasi Anda.',
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () async {
+                    String url;
+                    if (Theme.of(context).platform == TargetPlatform.iOS) {
+                      url =
+                          result['update_url_ios'] ??
+                          'https://apps.apple.com/id/app/saat-youth-camp/id6751375478';
+                    } else {
+                      url =
+                          result['update_url_android'] ??
+                          'https://play.google.com/store/apps/details?id=com.sttsaat.sycapp';
+                    }
+                    if (await canLaunchUrl(Uri.parse(url))) {
+                      await launchUrl(
+                        Uri.parse(url),
+                        mode: LaunchMode.externalApplication,
+                      );
+                    }
+                    // Jangan tutup dialog, biarkan user tetap di sini
+                  },
+                  child: const Text('Update'),
+                ),
+              ],
+            ),
+          );
+        }
+        // Jangan lanjut validasi jika versi beda
+        return;
+      }
+      _startValidation();
+    } catch (e) {
+      // Jika gagal ambil versi, lanjut validasi normal
+      _startValidation();
+    }
   }
 
   Future<void> _startValidation() async {
